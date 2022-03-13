@@ -3,6 +3,8 @@
 name: CI
 
 on:
+  push:
+    branches: [main-msp, dev-msp]
   pull_request:
     branches: [main-msp, dev-msp]
 
