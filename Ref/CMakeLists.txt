@@ -47,7 +47,6 @@ add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/SignalGen/")
 # Add Topology subdirectory
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")
 
-
 # add ReturnTypes Enum for EPS Battery Component
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ReturnTypes/")
 
@@ -57,6 +56,15 @@ add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/EPSBatPorts/")
 # add the EPS Battery Component
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/EPSBatLogic/")
 
+# add the Internal types
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/InternalTypes/")
+
+# add the EPS Controller ports
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/EPSControllerPorts/")
+
+
+# add the EPS Controller ports
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/EPSController/")
 
 
 set(SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/Top/Main.cpp")
