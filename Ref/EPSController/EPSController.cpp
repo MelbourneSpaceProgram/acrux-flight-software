@@ -55,6 +55,7 @@ namespace Ref {
     )
   {
     // TODO
+    this->batteryOut_out(0, &conopscommand);
   }
 
   void EPSController ::
@@ -64,6 +65,7 @@ namespace Ref {
     )
   {
     // TODO
+    this->conopsOut_out(0, &state);
   }
 
   // ----------------------------------------------------------------------
@@ -77,6 +79,7 @@ namespace Ref {
     )
   {
     // TODO
+    this->stateSerialOut_out(&Buffer);
   }
 
   // ----------------------------------------------------------------------
@@ -90,7 +93,7 @@ namespace Ref {
         Ref::InternalType c
     )
   {
-    // TODO
+    // not TODO
     this->cmdResponse_out(opCode,cmdSeq,Fw::CmdResponse::OK);
   }
 
@@ -101,7 +104,7 @@ namespace Ref {
         Ref::InternalType c
     )
   {
-    // TODO
+    // not TODO
     this->cmdResponse_out(opCode,cmdSeq,Fw::CmdResponse::OK);
   }
 
@@ -112,7 +115,7 @@ namespace Ref {
         Ref::InternalType c
     )
   {
-    // TODO
+    // not TODO
     this->cmdResponse_out(opCode,cmdSeq,Fw::CmdResponse::OK);
   }
 
