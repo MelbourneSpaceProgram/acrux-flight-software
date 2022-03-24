@@ -55,7 +55,7 @@ namespace Ref {
     )
   {
     // TODO
-    this->batteryOut_out(0, &conopscommand);
+    this->batteryOut_out(0, conopscommand);
   }
 
   void EPSController ::
@@ -65,7 +65,7 @@ namespace Ref {
     )
   {
     // TODO
-    this->conopsOut_out(0, &state);
+    this->conopsOut_out(0, state);
   }
 
   // ----------------------------------------------------------------------
@@ -79,7 +79,7 @@ namespace Ref {
     )
   {
     // TODO
-    this->stateSerialOut_out(&Buffer);
+    this->stateSerialOut_out(0,Buffer);
   }
 
   // ----------------------------------------------------------------------
