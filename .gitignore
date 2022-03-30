@@ -1,6 +1,6 @@
 build/
 build*/
-gtest/
+gtestbuild/
 
 AutoXML/
 test_harness/src/test_harness-C/application.out
@@ -33,7 +33,6 @@ Tester.*
 !**/test/ut/TesterBase.*
 !**/test/ut/Tester.*
 
-*.mdxml.bak
 *.sconsign.dblite
 *.class
 .classpath
