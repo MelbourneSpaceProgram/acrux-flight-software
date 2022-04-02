@@ -77,3 +77,4 @@ module Ref {
     telemetry battery: F32
 
   }
+}
