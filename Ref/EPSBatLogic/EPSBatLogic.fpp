@@ -7,7 +7,7 @@ module Ref {
     # General ports
     # ----------------------------------------------------------------------
 
-    @ Port for sending the battery level to the state component
+    @ Port for sending the battery level to the controller component
     output port epsBatLogicOut: eps_logic_bat_output
 
     @ Port for receiving the result
@@ -42,7 +42,7 @@ module Ref {
     # Commands
     # ----------------------------------------------------------------------
 
-    @ Do a math operation
+    @ Send battery level
     async command SEND_BATTERY_LEVEL(
                            battery: F32 @< the battery level to send through
                          )
