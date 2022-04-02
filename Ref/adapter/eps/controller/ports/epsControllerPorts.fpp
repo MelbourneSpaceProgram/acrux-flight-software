@@ -15,10 +15,14 @@ module Ref {
   port controller_state_out(battery_level: f32)
 
   @ sending command down to payload power component 
-  port controller_battery_out(conopscommand: InternalType) -> ReturnType
+  port controller_battery_out(
+                                power: bool @< boolean val, true -> ON, false -> OFF
+                              ) -> ReturnType
 
   @ receive payload confirmation from payload power component 
-  port controller_payload_in(confirmation: ReturnType)
+  port controller_payload_in(
+                              status: bool @< boolean val, true -> SUCCESS, false -> FAILURE
+                            )
   
   @ sending battery up to conops
   port controller_conops_out(battery: f32)

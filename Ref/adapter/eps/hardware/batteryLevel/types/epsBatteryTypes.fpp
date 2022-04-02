@@ -1,6 +1,6 @@
 module Ref {
   @ Command receive return type
-  enum cmdRecv {
+  enum ReturnType {
     SUCCESS 
     FAILURE 
   }
