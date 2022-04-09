@@ -63,7 +63,7 @@ namespace Ref {
     )
   {
     this->pushFromPortEntry_batteryOut(power);
-    // TODO: Return a value
+    return ReturnType::SUCCESS; // TODO: Return a value
   }
 
   void Tester ::
@@ -95,8 +95,7 @@ namespace Ref {
   void Tester ::
     testConopsIn( NATIVE_INT_TYPE portNum, bool conopscommand)
   {
-       this->invoke_to_conopsIn(portNum,conopscommand);
-
+       this->from_batteryOut_handler(portNum, true);
       // verify that that one output port was invoked overall
       //ASSERT_IN_PORT_HISTORY_SIZE(1);
       // verify the arguments of the operation port
