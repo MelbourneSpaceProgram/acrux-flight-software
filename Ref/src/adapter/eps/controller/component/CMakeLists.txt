@@ -1,3 +1,10 @@
+# Register the standard build
+set(SOURCE_FILES
+  "${CMAKE_CURRENT_LIST_DIR}/epsControllerComponent.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/epsControllerComponent.fpp"
+)
+register_fprime_module()
+# Register the unit test build
 set(UT_SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/epsControllerComponent.fpp"
   "${CMAKE_CURRENT_LIST_DIR}/test/ut/Tester.cpp"
