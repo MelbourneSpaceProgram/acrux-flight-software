@@ -20,12 +20,16 @@ namespace Ref {
   // Construction, initialization, and destruction
   // ----------------------------------------------------------------------
 
+  bool powerCommand = true;
+
   epsPayloadPowerComponent ::
     epsPayloadPowerComponent(
         const char *const compName
     ) : epsPayloadPowerComponentComponentBase(compName)
   {
+
     //bool powerCommand = true; 
+
   }
 
   void epsPayloadPowerComponent ::
@@ -53,8 +57,10 @@ namespace Ref {
     )
   {
     // TODO return
-    auto powerCommand = power;
-    this->requestPowerStatusOut(power);
+
+    Ref::powerCommand = power;
+
+    this->requestPowerStatusOut_out(portNum, power);
     return cmdRecv::SUCCESS;
   }
 
@@ -66,13 +72,15 @@ namespace Ref {
   {
     // TODO return
 
-    if(status == powerCommand){
-      sendPowerCommandStatusOut(true);
+
+    if(status == Ref::powerCommand){
+      sendPowerCommandStatusOut_out(portNum, true);
     }
     else{
-      sendPowerCommandOut(powerCommand);
+      sendPowerCommandOut_out(portNum, Ref::powerCommand);
     }
     return cmdRecv::SUCCESS;
+
   }
 
   // ----------------------------------------------------------------------
