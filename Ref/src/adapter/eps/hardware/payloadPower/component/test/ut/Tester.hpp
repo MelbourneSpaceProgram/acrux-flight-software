@@ -46,6 +46,8 @@ namespace Ref {
       //!
       void toDo();
 
+      void testerMainTest();
+
     private:
 
       // ----------------------------------------------------------------------
@@ -92,6 +94,8 @@ namespace Ref {
       //! Initialize components
       //!
       void initComponents();
+
+      void testHelper();
 
     private:
 

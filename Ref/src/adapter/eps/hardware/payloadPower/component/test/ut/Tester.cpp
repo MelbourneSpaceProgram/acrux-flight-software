@@ -51,6 +51,12 @@ namespace Ref {
     // TODO
   }
 
+  void Tester ::
+    testerMainTest()
+    {
+        this->testHelper();
+    }
+
   // ----------------------------------------------------------------------
   // Handlers for typed from ports
   // ----------------------------------------------------------------------
@@ -175,5 +181,14 @@ namespace Ref {
         INSTANCE
     );
   }
+
+  void Tester ::
+    testHelper()
+    {   
+        const bool powerCmdON = true;
+        this->invoke_to_receivePowerCommandIn(0, powerCmdON);
+
+        ASSERT_from_requestPowerStatusOut(0, powerCmdON);
+    }
 
 } // end namespace Ref
