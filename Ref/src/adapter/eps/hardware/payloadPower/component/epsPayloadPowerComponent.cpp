@@ -11,7 +11,7 @@
 // ======================================================================
 
 
-#include <Ref/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponent.hpp>
+#include <Ref/src/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponent.hpp>
 #include "Fw/Types/BasicTypes.hpp"
 
 namespace Ref {
@@ -25,7 +25,7 @@ namespace Ref {
         const char *const compName
     ) : epsPayloadPowerComponentComponentBase(compName)
   {
-
+    //bool powerCommand = true; 
   }
 
   void epsPayloadPowerComponent ::
@@ -53,6 +53,9 @@ namespace Ref {
     )
   {
     // TODO return
+    auto powerCommand = power;
+    this->requestPowerStatusOut(power);
+    return cmdRecv::SUCCESS;
   }
 
   Ref::cmdRecv epsPayloadPowerComponent ::
@@ -62,6 +65,14 @@ namespace Ref {
     )
   {
     // TODO return
+
+    if(status == powerCommand){
+      sendPowerCommandStatusOut(true);
+    }
+    else{
+      sendPowerCommandOut(powerCommand);
+    }
+    return cmdRecv::SUCCESS;
   }
 
   // ----------------------------------------------------------------------

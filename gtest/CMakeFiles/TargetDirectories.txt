@@ -1,0 +1,4 @@
+/home/nishq/docker/fprime/gtest/CMakeFiles/rebuild_cache.dir
+/home/nishq/docker/fprime/gtest/CMakeFiles/edit_cache.dir
+/home/nishq/docker/fprime/gtest/CMakeFiles/gtest_main.dir
+/home/nishq/docker/fprime/gtest/CMakeFiles/gtest.dir

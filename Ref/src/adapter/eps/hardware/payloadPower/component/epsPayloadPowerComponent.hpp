@@ -13,7 +13,7 @@
 #ifndef epsPayloadPowerComponent_HPP
 #define epsPayloadPowerComponent_HPP
 
-#include "Ref/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponentComponentAc.hpp"
+#include "Ref/src/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponentComponentAc.hpp"
 
 namespace Ref {
 
