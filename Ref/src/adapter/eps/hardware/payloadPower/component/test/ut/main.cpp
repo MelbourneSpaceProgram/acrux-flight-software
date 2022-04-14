@@ -2,7 +2,7 @@
 
 TEST(Nominal, MainTest) {
     Ref::Tester tester;
-    tester.testMainTest();
+    tester.testerMainTest();
 }
 
 int main(int argc, char **argv) {
