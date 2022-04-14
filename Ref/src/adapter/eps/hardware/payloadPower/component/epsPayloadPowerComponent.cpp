@@ -60,7 +60,9 @@ namespace Ref {
 
     Ref::powerCommand = power;
 
-    this->requestPowerStatusOut_out(power);
+
+    this->requestPowerStatusOut_out(portNum, power);
+
     return cmdRecv::SUCCESS;
   }
 
@@ -74,10 +76,11 @@ namespace Ref {
 
 
     if(status == Ref::powerCommand){
-      sendPowerCommandStatusOut_out(true);
+
+      sendPowerCommandStatusOut_out(portNum, true);
     }
     else{
-      sendPowerCommandOut_out(Ref::powerCommand);
+      sendPowerCommandOut_out(portNum, Ref::powerCommand);
     }
     return cmdRecv::SUCCESS;
 
