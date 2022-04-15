@@ -188,7 +188,7 @@ namespace Ref {
         const bool powerCmdON = true;
         this->invoke_to_receivePowerCommandIn(0, powerCmdON);
 
-        ASSERT_from_requestPowerStatusOut(0, powerCmdON);
+        ASSERT_from_sendPowerCommandOut(0, powerCmdON);
     }
 
 } // end namespace Ref
