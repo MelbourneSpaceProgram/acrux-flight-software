@@ -55,6 +55,7 @@ namespace Ref {
     testerMainTest()
     {
         this->testHelper(true);
+        this->testHelper(false);
     }
 
   // ----------------------------------------------------------------------
