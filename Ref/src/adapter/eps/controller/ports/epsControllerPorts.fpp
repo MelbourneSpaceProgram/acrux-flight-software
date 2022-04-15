@@ -1,32 +1,50 @@
-module Ref {
-  @ need 6 ports: 2 going in and out from conops, 2 going in and out from state, 
-  @ 2 going in and out from battery level 
+module Ref{
+    
+    @ input port for receiving battery level request from conops
+    port recv_battery_level_req_from_conops_in(
+                                        req_status: bool
+                                        @< boolean val, true -> get status
+                                        )
 
-  @ receiving battery from state 
-  port controller_state_in(battery_level: F32)
+    @ output port for requesting battery level from the state
+    port req_battery_level_from_state_out(
+                                        req_status: bool @< boolean val, true -> get status
+                                        )
 
-  @ receiving command from conops
-  port controller_conops_in(
-                              conopscommand: bool @< boolean val, true -> ON, false -> OFF
-                            )
+    @ input port for receiving battery level from the state
+    port recv_battery_level_from_state_in(
+                                        battery_level: F32
+                                        )
 
-  @ receiving battery level from battery component
-  port controller_battery_in(battery: F32)
+    @ output port for sending battery level to conops
+    port send_battery_level_to_conops_out(
+                                        battery_level: F32
+                                        )
 
-  @ sending battery level to state
-  port controller_state_out(battery_level: F32)
+    @ input port for receiving battery level from battery level component
+    port recv_battery_level_from_eps_in(
+                                        battery_level: F32
+                                        )
 
-  @ sending command down to payload power component 
-  port controller_battery_out(
-                                power: bool @< boolean val, true -> ON, false -> OFF
-                              ) -> ReturnType
+    @ output port for sending battery level to state
+    port send_battery_level_to_state_out(
+                                        battery_level: F32
+                                        )
 
-  @ receive payload confirmation from payload power component 
-  port controller_payload_in(
-                              status: bool @< boolean val, true -> SUCCESS, false -> FAILURE
-                            )
-  
-  @ sending battery up to conops
-  port controller_conops_out(battery: F32)
+    @ input port for receiving payload power command from conops    
+    port recv_payload_power_cmd_from_conops_in(
+                                        power: bool @< boolean val, true -> ON, false -> OFF
+                                        )
+
+    @ output port for sending payload power command to payload power component
+    port send_payload_power_command_to_eps_out(
+                                        power: bool @< boolean val, true -> ON, false -> OFF
+                                        )
+                                        
+    @ input port for receiving success/failure in carrying out power operation  
+    port recv_power_command_status_from_eps_in(
+                                        status: bool @< boolean val, true -> SUCCESS, false -> FAILURE
+                                        )
+
 
 }
