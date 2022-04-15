@@ -54,7 +54,7 @@ namespace Ref {
   void Tester ::
     testerMainTest()
     {
-        this->testHelper();
+        this->testHelper(true);
     }
 
   // ----------------------------------------------------------------------
@@ -183,12 +183,22 @@ namespace Ref {
   }
 
   void Tester ::
-    testHelper()
+    testHelper(bool powerCmd)
     {   
-        const bool powerCmdON = true;
-        this->invoke_to_receivePowerCommandIn(0, powerCmdON);
+        //const bool powerCmdON = true;
+        this->invoke_to_receivePowerCommandIn(0, powerCmd);
 
-        ASSERT_from_sendPowerCommandOut(0, powerCmdON);
+        ASSERT_from_requestPowerStatusOut(0, powerCmd);
+
+        // Case 1: status already the same as power command sent
+        this->invoke_to_receivePowerStatusIn(0, powerCmd); 
+        ASSERT_from_sendPowerCommandStatusOut(0, true);
+
+        // Case 2: status different from the power command sent
+        this->invoke_to_receivePowerStatusIn(0, !powerCmd); 
+        ASSERT_from_sendPowerCommandOut(0, powerCmd);
+
+
     }
 
 } // end namespace Ref

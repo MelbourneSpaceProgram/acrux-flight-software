@@ -95,7 +95,7 @@ namespace Ref {
       //!
       void initComponents();
 
-      void testHelper();
+      void testHelper(bool powerCmd);
 
     private:
 
