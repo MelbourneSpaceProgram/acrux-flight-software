@@ -46,8 +46,8 @@ namespace Ref {
       //!
       void toDo();
 
-      void testerMainTest();
-
+      void testerPowerOn();
+      void testerPowerOff();
     private:
 
       // ----------------------------------------------------------------------

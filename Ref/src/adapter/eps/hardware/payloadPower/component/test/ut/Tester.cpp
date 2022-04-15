@@ -52,12 +52,17 @@ namespace Ref {
   }
 
   void Tester ::
-    testerMainTest()
+    testerPowerOn()
     {
         this->testHelper(true);
-        this->testHelper(false);
     }
 
+  void Tester ::
+    testerPowerOff()
+    {
+        this->testHelper(false);
+    }
+    
   // ----------------------------------------------------------------------
   // Handlers for typed from ports
   // ----------------------------------------------------------------------

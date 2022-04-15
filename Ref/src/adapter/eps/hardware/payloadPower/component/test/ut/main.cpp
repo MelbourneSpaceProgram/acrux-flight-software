@@ -1,8 +1,12 @@
 #include "Tester.hpp"
 
-TEST(Nominal, MainTest) {
+TEST(Nominal, PowerOn) {
     Ref::Tester tester;
-    tester.testerMainTest();
+    tester.testerPowerOn();
+}
+TEST(Nominal, PowerOff) {
+    Ref::Tester tester;
+    tester.testerPowerOff();
 }
 
 int main(int argc, char **argv) {
