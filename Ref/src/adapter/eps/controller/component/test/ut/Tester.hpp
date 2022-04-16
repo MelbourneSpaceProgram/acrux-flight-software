@@ -14,7 +14,7 @@
 #define TESTER_HPP
 
 #include "GTestBase.hpp"
-#include "Ref/adapter/eps/controller/component/epsControllerComponent.hpp"
+#include "Ref/adapter/eps/controller/component/epsControllerComponentComponentImpl.hpp"
 
 namespace Ref {
 
@@ -46,40 +46,51 @@ namespace Ref {
       //!
       void toDo();
 
-      void testPorts();
     private:
 
       // ----------------------------------------------------------------------
       // Handlers for typed from ports
       // ----------------------------------------------------------------------
 
-      //! Handler for from_batteryOut
+      //! Handler for from_reqBatteryFromStateOut
       //!
-      Ref::ReturnType from_batteryOut_handler(
+      void from_reqBatteryFromStateOut_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          bool req_status /*!< 
+      boolean val, true -> get status
+      */
+      );
+
+      //! Handler for from_sendBatteryToConopsOut
+      //!
+      void from_sendBatteryToConopsOut_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          F32 battery_level 
+      );
+
+      //! Handler for from_sendBatteryToStateOut
+      //!
+      void from_sendBatteryToStateOut_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          F32 battery_level 
+      );
+
+      //! Handler for from_sendPwrCmdToEPSOut
+      //!
+      void from_sendPwrCmdToEPSOut_handler(
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           bool power /*!< 
       boolean val, true -> ON, false -> OFF
       */
       );
 
-      //! Handler for from_conopsOut
+      //! Handler for from_sendPwrStatusOut
       //!
-      void from_conopsOut_handler(
+      void from_sendPwrStatusOut_handler(
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          F32 battery 
-      );
-
-    private:
-
-      // ----------------------------------------------------------------------
-      // Handlers for serial from ports
-      // ----------------------------------------------------------------------
-
-      //! Handler for from_stateSerialOut
-      //!
-      void from_stateSerialOut_handler(
-        NATIVE_INT_TYPE portNum, /*!< The port number*/
-        Fw::SerializeBufferBase &Buffer /*!< The serialization buffer*/
+          bool status /*!< 
+      boolean val, true -> SUCCESS, false -> FAILURE
+      */
       );
 
     private:
@@ -87,10 +98,6 @@ namespace Ref {
       // ----------------------------------------------------------------------
       // Helper methods
       // ----------------------------------------------------------------------
-      
-      //! Test conopsIn port
-
-      void testConopsIn(NATIVE_INT_TYPE portNum, bool conopscommand);
 
       //! Connect ports
       //!
@@ -108,7 +115,7 @@ namespace Ref {
 
       //! The component under test
       //!
-      epsControllerComponent component;
+      epsControllerComponentComponentImpl component;
 
   };
 

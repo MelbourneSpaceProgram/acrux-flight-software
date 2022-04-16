@@ -56,36 +56,49 @@ namespace Ref {
   // Handlers for typed from ports
   // ----------------------------------------------------------------------
 
-  Ref::ReturnType Tester ::
-    from_batteryOut_handler(
+  void Tester ::
+    from_reqBatteryFromStateOut_handler(
+        const NATIVE_INT_TYPE portNum,
+        bool req_status
+    )
+  {
+    this->pushFromPortEntry_reqBatteryFromStateOut(req_status);
+  }
+
+  void Tester ::
+    from_sendBatteryToConopsOut_handler(
+        const NATIVE_INT_TYPE portNum,
+        F32 battery_level
+    )
+  {
+    this->pushFromPortEntry_sendBatteryToConopsOut(battery_level);
+  }
+
+  void Tester ::
+    from_sendBatteryToStateOut_handler(
+        const NATIVE_INT_TYPE portNum,
+        F32 battery_level
+    )
+  {
+    this->pushFromPortEntry_sendBatteryToStateOut(battery_level);
+  }
+
+  void Tester ::
+    from_sendPwrCmdToEPSOut_handler(
         const NATIVE_INT_TYPE portNum,
         bool power
     )
   {
-    this->pushFromPortEntry_batteryOut(power);
-    return ReturnType::SUCCESS; // TODO: Return a value
+    this->pushFromPortEntry_sendPwrCmdToEPSOut(power);
   }
 
   void Tester ::
-    from_conopsOut_handler(
+    from_sendPwrStatusOut_handler(
         const NATIVE_INT_TYPE portNum,
-        F32 battery
+        bool status
     )
   {
-    this->pushFromPortEntry_conopsOut(battery);
-  }
-
-  // ----------------------------------------------------------------------
-  // Handlers for serial from ports
-  // ----------------------------------------------------------------------
-
-  void Tester ::
-    from_stateSerialOut_handler(
-        NATIVE_INT_TYPE portNum, /*!< The port number*/
-        Fw::SerializeBufferBase &Buffer /*!< The serialization buffer*/
-    )
-  {
-    // TODO
+    this->pushFromPortEntry_sendPwrStatusOut(status);
   }
 
   // ----------------------------------------------------------------------
@@ -93,21 +106,6 @@ namespace Ref {
   // ----------------------------------------------------------------------
 
   void Tester ::
-    testConopsIn( NATIVE_INT_TYPE portNum, bool conopscommand)
-  {
-       this->from_batteryOut_handler(portNum, true);
-      // verify that that one output port was invoked overall
-      //ASSERT_IN_PORT_HISTORY_SIZE(1);
-      // verify the arguments of the operation port
-      //ASSERT_from_conopsIn(portNum, conopscommand);
-      ASSERT_from_batteryOut_SIZE(1);
-
-  }
-  void Tester::
-    testPorts(){
-	    this->testConopsIn(0, true);
-  }
-  void Tester:: 
     connectPorts()
   {
 
@@ -117,22 +115,34 @@ namespace Ref {
         this->component.get_cmdIn_InputPort(0)
     );
 
-    // conopsIn
-    this->connect_to_conopsIn(
+    // recvBatteryFromEPSIn
+    this->connect_to_recvBatteryFromEPSIn(
         0,
-        this->component.get_conopsIn_InputPort(0)
+        this->component.get_recvBatteryFromEPSIn_InputPort(0)
     );
 
-    // stateIn
-    this->connect_to_stateIn(
+    // recvBatteryFromStateIn
+    this->connect_to_recvBatteryFromStateIn(
         0,
-        this->component.get_stateIn_InputPort(0)
+        this->component.get_recvBatteryFromStateIn_InputPort(0)
     );
 
-    // batteryOut
-    this->component.set_batteryOut_OutputPort(
+    // recvBatteryReqFromConopsIn
+    this->connect_to_recvBatteryReqFromConopsIn(
         0,
-        this->get_from_batteryOut(0)
+        this->component.get_recvBatteryReqFromConopsIn_InputPort(0)
+    );
+
+    // recvPwrCmdFromConopsIn
+    this->connect_to_recvPwrCmdFromConopsIn(
+        0,
+        this->component.get_recvPwrCmdFromConopsIn_InputPort(0)
+    );
+
+    // recvPwrStatusFromEPSIn
+    this->connect_to_recvPwrStatusFromEPSIn(
+        0,
+        this->component.get_recvPwrStatusFromEPSIn_InputPort(0)
     );
 
     // cmdRegOut
@@ -147,16 +157,40 @@ namespace Ref {
         this->get_from_cmdResponseOut(0)
     );
 
-    // conopsOut
-    this->component.set_conopsOut_OutputPort(
-        0,
-        this->get_from_conopsOut(0)
-    );
-
     // eventOut
     this->component.set_eventOut_OutputPort(
         0,
         this->get_from_eventOut(0)
+    );
+
+    // reqBatteryFromStateOut
+    this->component.set_reqBatteryFromStateOut_OutputPort(
+        0,
+        this->get_from_reqBatteryFromStateOut(0)
+    );
+
+    // sendBatteryToConopsOut
+    this->component.set_sendBatteryToConopsOut_OutputPort(
+        0,
+        this->get_from_sendBatteryToConopsOut(0)
+    );
+
+    // sendBatteryToStateOut
+    this->component.set_sendBatteryToStateOut_OutputPort(
+        0,
+        this->get_from_sendBatteryToStateOut(0)
+    );
+
+    // sendPwrCmdToEPSOut
+    this->component.set_sendPwrCmdToEPSOut_OutputPort(
+        0,
+        this->get_from_sendPwrCmdToEPSOut(0)
+    );
+
+    // sendPwrStatusOut
+    this->component.set_sendPwrStatusOut_OutputPort(
+        0,
+        this->get_from_sendPwrStatusOut(0)
     );
 
     // textEventOut
@@ -178,23 +212,6 @@ namespace Ref {
     );
 
 
-  // ----------------------------------------------------------------------
-  // Connect serial output ports
-  // ----------------------------------------------------------------------
-    this->component.set_stateSerialOut_OutputPort(
-        0,
-        this->get_from_stateSerialOut(0)
-    );
-
-
-  // ----------------------------------------------------------------------
-  // Connect serial input ports
-  // ----------------------------------------------------------------------
-    // batterySerialIn
-    this->connect_to_batterySerialIn(
-        0,
-        this->component.get_batterySerialIn_InputPort(0)
-    );
 
 
   }
