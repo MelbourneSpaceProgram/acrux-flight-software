@@ -53,7 +53,7 @@ namespace Ref {
         F32 battery_level
     )
   {
-    // TODO
+    this->sendBatteryToStateOut_out(portNum, battery_level);
   }
 
   void epsControllerComponent ::
@@ -62,7 +62,7 @@ namespace Ref {
         F32 battery_level
     )
   {
-    // TODO
+    this->sendBatteryToConopsOut_out(portNum, battery_level);
   }
 
   void epsControllerComponent ::
@@ -71,7 +71,7 @@ namespace Ref {
         bool req_status
     )
   {
-    // TODO
+    this->reqBatteryFromStateOut_out(portNum, req_status);
   }
 
   void epsControllerComponent ::
@@ -80,7 +80,7 @@ namespace Ref {
         bool power
     )
   {
-    // TODO
+    this->sendPwrCmdToEPSOut_out(portNum, power);
   }
 
   void epsControllerComponent ::
@@ -89,7 +89,7 @@ namespace Ref {
         bool status
     )
   {
-    // TODO
+    this->sendPwrStatusOut(portNum, status)
   }
 
   // ----------------------------------------------------------------------

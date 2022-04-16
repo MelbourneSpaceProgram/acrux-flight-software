@@ -23,7 +23,9 @@ module Ref {
 
     output port sendPwrCmdToEPSOut: send_payload_power_command_to_eps_out
 
-    async input port recvPwrStatusFromEPSIn: recv_power_command_status_from_eps_in
+    sync input port recvPwrStatusFromEPSIn: recv_power_command_status_from_eps_in
+
+    output port sendPwrStatusOut: send_power_command_status_to_conops_out
 
     # ----------------------------------------------------------------------
     # Special ports

@@ -46,5 +46,7 @@ module Ref{
                                         status: bool @< boolean val, true -> SUCCESS, false -> FAILURE
                                         )
 
-
+    port send_power_command_status_to_conops_out(
+                                        status: bool @< boolean val, true -> SUCCESS, false -> FAILURE
+                                        )
 }
