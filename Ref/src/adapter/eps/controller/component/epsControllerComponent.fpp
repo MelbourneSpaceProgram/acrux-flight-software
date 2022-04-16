@@ -7,17 +7,23 @@ module Ref {
     # General ports
     # ----------------------------------------------------------------------
 
-    async input port conopsIn: controller_conops_in
+    async input port recvBatteryLevelReqFromConopsIn: recv_battery_level_req_from_conops_in
 
-    async input port stateIn: controller_state_in
+    output port reqBatteryLevelFromStateOut: req_battery_level_from_state_out
 
-    output port conopsOut: controller_conops_out
+    async input port recvBatteryLevelFromStateIn: recv_battery_level_from_state_in
 
-    output port batteryOut: controller_battery_out
+    output port sendBatteryLevelToConopsOut: send_battery_level_to_conops_out
 
-    async input port batterySerialIn: serial
+    async input port recvBatteryLevelFromEPSIn: recv_battery_level_from_eps_in
 
-    output port stateSerialOut: serial
+    output port sendBatteryLevelToStateOut: send_battery_level_to_state_out
+
+    async input port recPayloadPowerCmdFromConopsIn: recv_payload_power_cmd_from_conops_in
+
+    output port sendPayloadPowerCmdToEPSOut: send_payload_power_command_to_eps_out
+
+    async input port recvPowerCmdStatusFromEPSIn: recv_power_command_status_from_eps_in
 
     # ----------------------------------------------------------------------
     # Special ports
