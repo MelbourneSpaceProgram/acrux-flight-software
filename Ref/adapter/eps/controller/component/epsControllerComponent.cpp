@@ -89,7 +89,7 @@ namespace Ref {
         bool status
     )
   {
-    this->sendPwrStatusOut(portNum, status)
+    this->sendPwrStatusOut_out(portNum, status);
   }
 
   // ----------------------------------------------------------------------
