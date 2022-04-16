@@ -7,23 +7,23 @@ module Ref {
     # General ports
     # ----------------------------------------------------------------------
 
-    async input port recvBatteryLevelReqFromConopsIn: recv_battery_level_req_from_conops_in
+    async input port recvBatteryReqFromConopsIn: recv_battery_level_req_from_conops_in
 
-    output port reqBatteryLevelFromStateOut: req_battery_level_from_state_out
+    output port reqBatteryFromStateOut: req_battery_level_from_state_out
 
-    async input port recvBatteryLevelFromStateIn: recv_battery_level_from_state_in
+    async input port recvBatteryFromStateIn: recv_battery_level_from_state_in
 
-    output port sendBatteryLevelToConopsOut: send_battery_level_to_conops_out
+    output port sendBatteryToConopsOut: send_battery_level_to_conops_out
 
-    async input port recvBatteryLevelFromEPSIn: recv_battery_level_from_eps_in
+    async input port recvBatteryFromEPSIn: recv_battery_level_from_eps_in
 
-    output port sendBatteryLevelToStateOut: send_battery_level_to_state_out
+    output port sendBatteryToStateOut: send_battery_level_to_state_out
 
-    async input port recPayloadPowerCmdFromConopsIn: recv_payload_power_cmd_from_conops_in
+    async input port recvPwrCmdFromConopsIn: recv_payload_power_cmd_from_conops_in
 
-    output port sendPayloadPowerCmdToEPSOut: send_payload_power_command_to_eps_out
+    output port sendPwrCmdToEPSOut: send_payload_power_command_to_eps_out
 
-    async input port recvPowerCmdStatusFromEPSIn: recv_power_command_status_from_eps_in
+    async input port recvPwrStatusFromEPSIn: recv_power_command_status_from_eps_in
 
     # ----------------------------------------------------------------------
     # Special ports
