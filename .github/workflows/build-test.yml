@@ -49,6 +49,7 @@ jobs:
             mkdir -p ~/clang-tidy-12
             sudo dpkg -L clang-tidy-12 | while IFS= read -r f; do if test -f $f; then echo $f; fi; done | xargs cp --parents --target-directory ~/clang-tidy-12/
           fi
+      working-directory: Ref
 
     - name: Cache fprime-util generate
       uses: actions/cache@v2
@@ -68,9 +69,11 @@ jobs:
             mkdir -p ~/fprime-util-generate
             sudo cp --verbose --force --recursive $(pwd)/build-fprime-automatic-native/ ~/fprime-util-generate/
           fi
+      working-directory: Ref
 
     - name: Compile
       run: fprime-util build --all --jobs "$(nproc || printf '%s\n' 1)"
+      working-directory: Ref
     
 
   test:
@@ -116,6 +119,7 @@ jobs:
             mkdir -p ~/fprime-util-generate-Ref
             sudo cp --verbose --force --recursive $(pwd)/build-fprime-automatic-native/ ~/fprime-util-generate-Ref/
           fi
+      working-directory: Ref
 
     - name: Cache fprime-util generate --ut
       uses: actions/cache@v2
