@@ -14,7 +14,7 @@
 #define TESTER_HPP
 
 #include "GTestBase.hpp"
-#include "Ref/adapter/eps/controller/component/epsControllerComponentComponentImpl.hpp"
+#include "Ref/adapter/eps/controller/component/epsControllerComponent.hpp"
 
 namespace Ref {
 
@@ -45,6 +45,11 @@ namespace Ref {
       //! To do
       //!
       void toDo();
+      void testerEPSInStateOut();
+      void testerStateInConopsOut();
+      void testerConopsInStateOut();
+      void testerConopsInEPSOut();
+      void testerEPSInPwrStatusOut();
 
     private:
 
@@ -107,6 +112,12 @@ namespace Ref {
       //!
       void initComponents();
 
+      void testEPSInStateOut(F32 battery_level);
+      void testStateInConopsOut(F32 battery_level); 
+      void testConopsInStateOut(bool req_status);
+      void testConopsInEPSOut(bool power);
+      void testEPSInPwrStatusOut(bool status); 
+
     private:
 
       // ----------------------------------------------------------------------
@@ -115,7 +126,7 @@ namespace Ref {
 
       //! The component under test
       //!
-      epsControllerComponentComponentImpl component;
+      epsControllerComponent component;
 
   };
 

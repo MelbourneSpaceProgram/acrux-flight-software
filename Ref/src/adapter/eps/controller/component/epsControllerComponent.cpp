@@ -1,6 +1,6 @@
 // ======================================================================
 // \title  epsControllerComponent.cpp
-// \author danny
+// \author nishq
 // \brief  cpp file for epsControllerComponent component implementation class
 //
 // \copyright
@@ -31,11 +31,10 @@ namespace Ref {
   void epsControllerComponent ::
     init(
         const NATIVE_INT_TYPE queueDepth,
-        const NATIVE_INT_TYPE msgSize,
         const NATIVE_INT_TYPE instance
     )
   {
-    epsControllerComponentComponentBase::init(queueDepth, msgSize, instance);
+    epsControllerComponentComponentBase::init(queueDepth, instance);
   }
 
   epsControllerComponent ::
@@ -49,37 +48,48 @@ namespace Ref {
   // ----------------------------------------------------------------------
 
   void epsControllerComponent ::
-    conopsIn_handler(
-        const NATIVE_INT_TYPE portNum,
-        bool conopscommand
-    )
-  {
-    // TODO
-    this->batteryOut_out(portNum, conopscommand);
-  }
-
-  void epsControllerComponent ::
-    stateIn_handler(
+    recvBatteryFromEPSIn_handler(
         const NATIVE_INT_TYPE portNum,
         F32 battery_level
     )
   {
-    // TODO
-    this->conopsOut_out(portNum,battery_level);
+    this->sendBatteryToStateOut_out(portNum, battery_level);
   }
 
-  // ----------------------------------------------------------------------
-  // Handler implementations for user-defined serial input ports
-  // ----------------------------------------------------------------------
-
   void epsControllerComponent ::
-    batterySerialIn_handler(
-        NATIVE_INT_TYPE portNum, /*!< The port number*/
-        Fw::SerializeBufferBase &Buffer /*!< The serialization buffer*/
+    recvBatteryFromStateIn_handler(
+        const NATIVE_INT_TYPE portNum,
+        F32 battery_level
     )
   {
-    // TODO
-    this->stateSerialOut_out(portNum, Buffer);
+    this->sendBatteryToConopsOut_out(portNum, battery_level);
+  }
+
+  void epsControllerComponent ::
+    recvBatteryReqFromConopsIn_handler(
+        const NATIVE_INT_TYPE portNum,
+        bool req_status
+    )
+  {
+    this->reqBatteryFromStateOut_out(portNum, req_status);
+  }
+
+  void epsControllerComponent ::
+    recvPwrCmdFromConopsIn_handler(
+        const NATIVE_INT_TYPE portNum,
+        bool power
+    )
+  {
+    this->sendPwrCmdToEPSOut_out(portNum, power);
+  }
+
+  void epsControllerComponent ::
+    recvPwrStatusFromEPSIn_handler(
+        const NATIVE_INT_TYPE portNum,
+        bool status
+    )
+  {
+    this->sendPwrStatusOut_out(portNum, status);
   }
 
   // ----------------------------------------------------------------------

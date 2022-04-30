@@ -1,6 +1,6 @@
 // ======================================================================
 // \title  epsControllerComponent.hpp
-// \author danny
+// \author nishq
 // \brief  hpp file for epsControllerComponent component implementation class
 //
 // \copyright
@@ -37,7 +37,6 @@ namespace Ref {
       //!
       void init(
           const NATIVE_INT_TYPE queueDepth, /*!< The queue depth*/
-          const NATIVE_INT_TYPE msgSize, /*!< The message size*/
           const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
       );
 
@@ -51,33 +50,45 @@ namespace Ref {
       // Handler implementations for user-defined typed input ports
       // ----------------------------------------------------------------------
 
-      //! Handler implementation for conopsIn
+      //! Handler implementation for recvBatteryFromEPSIn
       //!
-      void conopsIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool conopscommand /*!< 
-      boolean val, true -> ON, false -> OFF
-      */
-      );
-
-      //! Handler implementation for stateIn
-      //!
-      void stateIn_handler(
+      void recvBatteryFromEPSIn_handler(
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           F32 battery_level 
       );
 
-    PRIVATE:
-
-      // ----------------------------------------------------------------------
-      // Handler implementations for user-defined serial input ports
-      // ----------------------------------------------------------------------
-
-      //! Handler implementation for batterySerialIn
+      //! Handler implementation for recvBatteryFromStateIn
       //!
-      void batterySerialIn_handler(
-        NATIVE_INT_TYPE portNum, /*!< The port number*/
-        Fw::SerializeBufferBase &Buffer /*!< The serialization buffer*/
+      void recvBatteryFromStateIn_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          F32 battery_level 
+      );
+
+      //! Handler implementation for recvBatteryReqFromConopsIn
+      //!
+      void recvBatteryReqFromConopsIn_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          bool req_status /*!< 
+      boolean val, true -> get status
+      */
+      );
+
+      //! Handler implementation for recvPwrCmdFromConopsIn
+      //!
+      void recvPwrCmdFromConopsIn_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          bool power /*!< 
+      boolean val, true -> ON, false -> OFF
+      */
+      );
+
+      //! Handler implementation for recvPwrStatusFromEPSIn
+      //!
+      void recvPwrStatusFromEPSIn_handler(
+          const NATIVE_INT_TYPE portNum, /*!< The port number*/
+          bool status /*!< 
+      boolean val, true -> SUCCESS, false -> FAILURE
+      */
       );
 
     PRIVATE:

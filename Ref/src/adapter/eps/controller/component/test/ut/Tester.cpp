@@ -52,6 +52,38 @@ namespace Ref {
     // TODO
   }
 
+  void Tester ::
+    testerEPSInStateOut()
+    { 
+        const F32 battery_level = 80.02;
+        this->testEPSInStateOut(battery_level);
+    }
+
+  void Tester ::
+    testerStateInConopsOut()
+    {
+        const F32 battery_level = 80.02;
+        this->testStateInConopsOut(battery_level);
+    }
+  void Tester ::
+    testerConopsInStateOut()
+    {
+        this->testConopsInStateOut(true);
+    }
+
+  void Tester ::
+    testerConopsInEPSOut()
+    {
+        this->testConopsInEPSOut(true);
+    }
+
+  void Tester ::
+    testerEPSInPwrStatusOut()
+    {
+        this->testEPSInPwrStatusOut(true);
+    }
+
+
   // ----------------------------------------------------------------------
   // Handlers for typed from ports
   // ----------------------------------------------------------------------
@@ -225,4 +257,42 @@ namespace Ref {
     );
   }
 
+  void Tester ::
+    testEPSInStateOut(F32 battery_level)
+  {
+    this->invoke_to_recvBatteryFromEPSIn(0, battery_level);
+    this->component.doDispatch();
+    ASSERT_from_sendBatteryToStateOut(0, battery_level);
+  }
+  
+  void Tester ::
+    testStateInConopsOut(F32 battery_level)
+  {
+    this->invoke_to_recvBatteryFromStateIn(0, battery_level);
+    this->component.doDispatch();
+    ASSERT_from_sendBatteryToConopsOut(0,battery_level);
+  }
+
+  void Tester ::
+    testConopsInStateOut(bool req_status) 
+  {
+    this->invoke_to_recvBatteryReqFromConopsIn(0, req_status);
+    this->component.doDispatch();
+    ASSERT_from_reqBatteryFromStateOut(0,req_status);
+  }
+
+  void Tester ::
+    testConopsInEPSOut(bool power) 
+  {
+    this->invoke_to_recvPwrCmdFromConopsIn(0, power);
+    this->component.doDispatch();
+    ASSERT_from_sendPwrCmdToEPSOut(0,power);
+  }  
+  
+  void Tester ::
+    testEPSInPwrStatusOut(bool status) 
+  {
+    this->invoke_to_recvPwrStatusFromEPSIn(0, status);
+    ASSERT_from_sendPwrStatusOut(0,status);
+  } 
 } // end namespace Ref
