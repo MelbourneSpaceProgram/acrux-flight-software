@@ -13,117 +13,108 @@
 #ifndef epsControllerComponent_HPP
 #define epsControllerComponent_HPP
 
-#include "Ref/adapter/eps/controller/component/epsControllerComponentComponentAc.hpp"
+#include "Ref/src/adapter/eps/controller/component/epsControllerComponentComponentAc.hpp"
 
 namespace Ref {
 
-  class epsControllerComponent :
-    public epsControllerComponentComponentBase
-  {
+class epsControllerComponent : public epsControllerComponentComponentBase {
+   public:
+    // ----------------------------------------------------------------------
+    // Construction, initialization, and destruction
+    // ----------------------------------------------------------------------
 
-    public:
+    //! Construct object epsControllerComponent
+    //!
+    epsControllerComponent(
+        const char *const compName /*!< The component name*/
+    );
 
-      // ----------------------------------------------------------------------
-      // Construction, initialization, and destruction
-      // ----------------------------------------------------------------------
+    //! Initialize object epsControllerComponent
+    //!
+    void init(
+        const NATIVE_INT_TYPE queueDepth,  /*!< The queue depth*/
+        const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
+    );
 
-      //! Construct object epsControllerComponent
-      //!
-      epsControllerComponent(
-          const char *const compName /*!< The component name*/
-      );
+    //! Destroy object epsControllerComponent
+    //!
+    ~epsControllerComponent();
 
-      //! Initialize object epsControllerComponent
-      //!
-      void init(
-          const NATIVE_INT_TYPE queueDepth, /*!< The queue depth*/
-          const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
-      );
+    PRIVATE :
 
-      //! Destroy object epsControllerComponent
-      //!
-      ~epsControllerComponent();
+        // ----------------------------------------------------------------------
+        // Handler implementations for user-defined typed input ports
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Handler implementation for recvBatteryFromEPSIn
+        //!
+        void
+        recvBatteryFromEPSIn_handler(
+            const NATIVE_INT_TYPE portNum, /*!< The port number*/
+            F32 battery_level);
 
-      // ----------------------------------------------------------------------
-      // Handler implementations for user-defined typed input ports
-      // ----------------------------------------------------------------------
+    //! Handler implementation for recvBatteryFromStateIn
+    //!
+    void recvBatteryFromStateIn_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        F32 battery_level);
 
-      //! Handler implementation for recvBatteryFromEPSIn
-      //!
-      void recvBatteryFromEPSIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          F32 battery_level 
-      );
+    //! Handler implementation for recvBatteryReqFromConopsIn
+    //!
+    void recvBatteryReqFromConopsIn_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool req_status                /*!<
+                   boolean val, true -> get status
+                   */
+    );
 
-      //! Handler implementation for recvBatteryFromStateIn
-      //!
-      void recvBatteryFromStateIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          F32 battery_level 
-      );
+    //! Handler implementation for recvPwrCmdFromConopsIn
+    //!
+    void recvPwrCmdFromConopsIn_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool power                     /*!<
+                        boolean val, true -> ON, false -> OFF
+                        */
+    );
 
-      //! Handler implementation for recvBatteryReqFromConopsIn
-      //!
-      void recvBatteryReqFromConopsIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool req_status /*!< 
-      boolean val, true -> get status
-      */
-      );
+    //! Handler implementation for recvPwrStatusFromEPSIn
+    //!
+    void recvPwrStatusFromEPSIn_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool status                    /*!<
+                       boolean val, true -> SUCCESS, false -> FAILURE
+                       */
+    );
 
-      //! Handler implementation for recvPwrCmdFromConopsIn
-      //!
-      void recvPwrCmdFromConopsIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool power /*!< 
-      boolean val, true -> ON, false -> OFF
-      */
-      );
+    PRIVATE :
 
-      //! Handler implementation for recvPwrStatusFromEPSIn
-      //!
-      void recvPwrStatusFromEPSIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool status /*!< 
-      boolean val, true -> SUCCESS, false -> FAILURE
-      */
-      );
+        // ----------------------------------------------------------------------
+        // Command handler implementations
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Implementation for SEND_BATTERY_COMMAND command handler
+        //! send commmand down to battery logic component
+        void
+        SEND_BATTERY_COMMAND_cmdHandler(
+            const FwOpcodeType opCode, /*!< The opcode*/
+            const U32 cmdSeq,          /*!< The command sequence number*/
+            Ref::InternalType c);
 
-      // ----------------------------------------------------------------------
-      // Command handler implementations
-      // ----------------------------------------------------------------------
+    //! Implementation for GET_STATE command handler
+    //! request something from state
+    void GET_STATE_cmdHandler(
+        const FwOpcodeType opCode, /*!< The opcode*/
+        const U32 cmdSeq,          /*!< The command sequence number*/
+        Ref::InternalType c);
 
-      //! Implementation for SEND_BATTERY_COMMAND command handler
-      //! send commmand down to battery logic component
-      void SEND_BATTERY_COMMAND_cmdHandler(
-          const FwOpcodeType opCode, /*!< The opcode*/
-          const U32 cmdSeq, /*!< The command sequence number*/
-          Ref::InternalType c 
-      );
+    //! Implementation for SEND_DATA_CONOPS command handler
+    //! send data packet up to conops
+    void SEND_DATA_CONOPS_cmdHandler(
+        const FwOpcodeType opCode, /*!< The opcode*/
+        const U32 cmdSeq,          /*!< The command sequence number*/
+        Ref::InternalType c);
+};
 
-      //! Implementation for GET_STATE command handler
-      //! request something from state
-      void GET_STATE_cmdHandler(
-          const FwOpcodeType opCode, /*!< The opcode*/
-          const U32 cmdSeq, /*!< The command sequence number*/
-          Ref::InternalType c 
-      );
-
-      //! Implementation for SEND_DATA_CONOPS command handler
-      //! send data packet up to conops
-      void SEND_DATA_CONOPS_cmdHandler(
-          const FwOpcodeType opCode, /*!< The opcode*/
-          const U32 cmdSeq, /*!< The command sequence number*/
-          Ref::InternalType c 
-      );
-
-
-    };
-
-} // end namespace Ref
+}  // end namespace Ref
 
 #endif

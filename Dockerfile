@@ -58,3 +58,5 @@ ENV PATH=${PATH}:${FPP_INSTALL_DIR}
 RUN pip install --upgrade fprime-tools fprime-gds
 ENV PATH=${PATH}:~/.local/bin
 COPY . .
+
+RUN git config --global --add safe.directory /usr/src

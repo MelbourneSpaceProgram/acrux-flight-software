@@ -13,69 +13,64 @@
 #ifndef epsBatteryComponent_HPP
 #define epsBatteryComponent_HPP
 
-#include "Ref/adapter/eps/hardware/batteryLevel/component/epsBatteryComponentComponentAc.hpp"
+#include "Ref/src/adapter/eps/hardware/batteryLevel/component/epsBatteryComponentComponentAc.hpp"
 
 namespace Ref {
 
-  class epsBatteryComponent :
-    public epsBatteryComponentComponentBase
-  {
+class epsBatteryComponent : public epsBatteryComponentComponentBase {
+   public:
+    // ----------------------------------------------------------------------
+    // Construction, initialization, and destruction
+    // ----------------------------------------------------------------------
 
-    public:
+    //! Construct object epsBatteryComponent
+    //!
+    epsBatteryComponent(
+        const char *const compName /*!< The component name*/
+    );
 
-      // ----------------------------------------------------------------------
-      // Construction, initialization, and destruction
-      // ----------------------------------------------------------------------
+    //! Initialize object epsBatteryComponent
+    //!
+    void init(
+        const NATIVE_INT_TYPE queueDepth,  /*!< The queue depth*/
+        const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
+    );
 
-      //! Construct object epsBatteryComponent
-      //!
-      epsBatteryComponent(
-          const char *const compName /*!< The component name*/
-      );
+    //! Destroy object epsBatteryComponent
+    //!
+    ~epsBatteryComponent();
 
-      //! Initialize object epsBatteryComponent
-      //!
-      void init(
-          const NATIVE_INT_TYPE queueDepth, /*!< The queue depth*/
-          const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
-      );
+    PRIVATE :
 
-      //! Destroy object epsBatteryComponent
-      //!
-      ~epsBatteryComponent();
+        // ----------------------------------------------------------------------
+        // Handler implementations for user-defined typed input ports
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Handler implementation for epsBatLogicIn
+        //!
+        Ref::ReturnType
+        epsBatLogicIn_handler(
+            const NATIVE_INT_TYPE portNum, /*!< The port number*/
+            F32 battery_level);
 
-      // ----------------------------------------------------------------------
-      // Handler implementations for user-defined typed input ports
-      // ----------------------------------------------------------------------
+    PRIVATE :
 
-      //! Handler implementation for epsBatLogicIn
-      //!
-      Ref::ReturnType epsBatLogicIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          F32 battery_level 
-      );
+        // ----------------------------------------------------------------------
+        // Command handler implementations
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Implementation for SEND_BATTERY_LEVEL command handler
+        //! Send battery level
+        void
+        SEND_BATTERY_LEVEL_cmdHandler(
+            const FwOpcodeType opCode, /*!< The opcode*/
+            const U32 cmdSeq,          /*!< The command sequence number*/
+            F32 battery                /*!<
+                           the battery level to send through
+                           */
+        );
+};
 
-      // ----------------------------------------------------------------------
-      // Command handler implementations
-      // ----------------------------------------------------------------------
-
-      //! Implementation for SEND_BATTERY_LEVEL command handler
-      //! Send battery level
-      void SEND_BATTERY_LEVEL_cmdHandler(
-          const FwOpcodeType opCode, /*!< The opcode*/
-          const U32 cmdSeq, /*!< The command sequence number*/
-          F32 battery /*!< 
-          the battery level to send through
-          */
-      );
-
-
-    };
-
-} // end namespace Ref
+}  // end namespace Ref
 
 #endif

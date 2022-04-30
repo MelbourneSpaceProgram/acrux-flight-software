@@ -14,122 +14,111 @@
 #define TESTER_HPP
 
 #include "GTestBase.hpp"
-#include "Ref/adapter/eps/controller/component/epsControllerComponent.hpp"
+#include "Ref/src/adapter/eps/controller/component/epsControllerComponent.hpp"
 
 namespace Ref {
 
-  class Tester :
-    public epsControllerComponentGTestBase
-  {
+class Tester : public epsControllerComponentGTestBase {
+    // ----------------------------------------------------------------------
+    // Construction and destruction
+    // ----------------------------------------------------------------------
 
-      // ----------------------------------------------------------------------
-      // Construction and destruction
-      // ----------------------------------------------------------------------
+   public:
+    //! Construct object Tester
+    //!
+    Tester();
 
-    public:
+    //! Destroy object Tester
+    //!
+    ~Tester();
 
-      //! Construct object Tester
-      //!
-      Tester();
+   public:
+    // ----------------------------------------------------------------------
+    // Tests
+    // ----------------------------------------------------------------------
 
-      //! Destroy object Tester
-      //!
-      ~Tester();
+    //! To do
+    //!
+    void toDo();
+    void testerEPSInStateOut();
+    void testerStateInConopsOut();
+    void testerConopsInStateOut();
+    void testerConopsInEPSOut();
+    void testerEPSInPwrStatusOut();
 
-    public:
+   private:
+    // ----------------------------------------------------------------------
+    // Handlers for typed from ports
+    // ----------------------------------------------------------------------
 
-      // ----------------------------------------------------------------------
-      // Tests
-      // ----------------------------------------------------------------------
+    //! Handler for from_reqBatteryFromStateOut
+    //!
+    void from_reqBatteryFromStateOut_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool req_status                /*!<
+                   boolean val, true -> get status
+                   */
+    );
 
-      //! To do
-      //!
-      void toDo();
-      void testerEPSInStateOut();
-      void testerStateInConopsOut();
-      void testerConopsInStateOut();
-      void testerConopsInEPSOut();
-      void testerEPSInPwrStatusOut();
+    //! Handler for from_sendBatteryToConopsOut
+    //!
+    void from_sendBatteryToConopsOut_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        F32 battery_level);
 
-    private:
+    //! Handler for from_sendBatteryToStateOut
+    //!
+    void from_sendBatteryToStateOut_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        F32 battery_level);
 
-      // ----------------------------------------------------------------------
-      // Handlers for typed from ports
-      // ----------------------------------------------------------------------
+    //! Handler for from_sendPwrCmdToEPSOut
+    //!
+    void from_sendPwrCmdToEPSOut_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool power                     /*!<
+                        boolean val, true -> ON, false -> OFF
+                        */
+    );
 
-      //! Handler for from_reqBatteryFromStateOut
-      //!
-      void from_reqBatteryFromStateOut_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool req_status /*!< 
-      boolean val, true -> get status
-      */
-      );
+    //! Handler for from_sendPwrStatusOut
+    //!
+    void from_sendPwrStatusOut_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool status                    /*!<
+                       boolean val, true -> SUCCESS, false -> FAILURE
+                       */
+    );
 
-      //! Handler for from_sendBatteryToConopsOut
-      //!
-      void from_sendBatteryToConopsOut_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          F32 battery_level 
-      );
+   private:
+    // ----------------------------------------------------------------------
+    // Helper methods
+    // ----------------------------------------------------------------------
 
-      //! Handler for from_sendBatteryToStateOut
-      //!
-      void from_sendBatteryToStateOut_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          F32 battery_level 
-      );
+    //! Connect ports
+    //!
+    void connectPorts();
 
-      //! Handler for from_sendPwrCmdToEPSOut
-      //!
-      void from_sendPwrCmdToEPSOut_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool power /*!< 
-      boolean val, true -> ON, false -> OFF
-      */
-      );
+    //! Initialize components
+    //!
+    void initComponents();
 
-      //! Handler for from_sendPwrStatusOut
-      //!
-      void from_sendPwrStatusOut_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool status /*!< 
-      boolean val, true -> SUCCESS, false -> FAILURE
-      */
-      );
+    void testEPSInStateOut(F32 battery_level);
+    void testStateInConopsOut(F32 battery_level);
+    void testConopsInStateOut(bool req_status);
+    void testConopsInEPSOut(bool power);
+    void testEPSInPwrStatusOut(bool status);
 
-    private:
+   private:
+    // ----------------------------------------------------------------------
+    // Variables
+    // ----------------------------------------------------------------------
 
-      // ----------------------------------------------------------------------
-      // Helper methods
-      // ----------------------------------------------------------------------
+    //! The component under test
+    //!
+    epsControllerComponent component;
+};
 
-      //! Connect ports
-      //!
-      void connectPorts();
-
-      //! Initialize components
-      //!
-      void initComponents();
-
-      void testEPSInStateOut(F32 battery_level);
-      void testStateInConopsOut(F32 battery_level); 
-      void testConopsInStateOut(bool req_status);
-      void testConopsInEPSOut(bool power);
-      void testEPSInPwrStatusOut(bool status); 
-
-    private:
-
-      // ----------------------------------------------------------------------
-      // Variables
-      // ----------------------------------------------------------------------
-
-      //! The component under test
-      //!
-      epsControllerComponent component;
-
-  };
-
-} // end namespace Ref
+}  // end namespace Ref
 
 #endif

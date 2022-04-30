@@ -13,79 +13,75 @@
 #ifndef epsPayloadPowerComponent_HPP
 #define epsPayloadPowerComponent_HPP
 
-#include "Ref/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponentComponentAc.hpp"
+#include "Ref/src/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponentComponentAc.hpp"
 
 namespace Ref {
 
-  class epsPayloadPowerComponent :
-    public epsPayloadPowerComponentComponentBase
-  {
+class epsPayloadPowerComponent : public epsPayloadPowerComponentComponentBase {
+   public:
+    // ----------------------------------------------------------------------
+    // Construction, initialization, and destruction
+    // ----------------------------------------------------------------------
 
-    public:
+    //! Construct object epsPayloadPowerComponent
+    //!
+    epsPayloadPowerComponent(
+        const char *const compName /*!< The component name*/
+    );
 
-      // ----------------------------------------------------------------------
-      // Construction, initialization, and destruction
-      // ----------------------------------------------------------------------
+    //! Initialize object epsPayloadPowerComponent
+    //!
+    void init(
+        const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
+    );
 
-      //! Construct object epsPayloadPowerComponent
-      //!
-      epsPayloadPowerComponent(
-          const char *const compName /*!< The component name*/
-      );
+    //! Destroy object epsPayloadPowerComponent
+    //!
+    ~epsPayloadPowerComponent();
 
-      //! Initialize object epsPayloadPowerComponent
-      //!
-      void init(
-          const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
-      );
+    PRIVATE :
 
-      //! Destroy object epsPayloadPowerComponent
-      //!
-      ~epsPayloadPowerComponent();
+        // ----------------------------------------------------------------------
+        // Handler implementations for user-defined typed input ports
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Handler implementation for receivePowerCommandIn
+        //!
+        Ref::cmdRecv
+        receivePowerCommandIn_handler(
+            const NATIVE_INT_TYPE portNum, /*!< The port number*/
+            bool power                     /*!<
+                            boolean val, true -> ON, false -> OFF
+                            */
+        );
 
-      // ----------------------------------------------------------------------
-      // Handler implementations for user-defined typed input ports
-      // ----------------------------------------------------------------------
+    //! Handler implementation for receivePowerStatusIn
+    //!
+    Ref::cmdRecv receivePowerStatusIn_handler(
+        const NATIVE_INT_TYPE portNum, /*!< The port number*/
+        bool status                    /*!<
+                       boolean val, true -> ON, false -> OFF
+                       */
+    );
 
-      //! Handler implementation for receivePowerCommandIn
-      //!
-      Ref::cmdRecv receivePowerCommandIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool power /*!< 
-      boolean val, true -> ON, false -> OFF
-      */
-      );
+    PRIVATE :
 
-      //! Handler implementation for receivePowerStatusIn
-      //!
-      Ref::cmdRecv receivePowerStatusIn_handler(
-          const NATIVE_INT_TYPE portNum, /*!< The port number*/
-          bool status /*!< 
-      boolean val, true -> ON, false -> OFF
-      */
-      );
+        // ----------------------------------------------------------------------
+        // Command handler implementations
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Implementation for PAYLOAD_POWER_CMD command handler
+        //! Command that receives a power signal for payload from the ground station
+        void
+        PAYLOAD_POWER_CMD_cmdHandler(
+            const FwOpcodeType opCode, /*!< The opcode*/
+            const U32 cmdSeq,          /*!< The command sequence number*/
+            bool power                 /*!<
+                            boolean val, true -> ON, false -> OFF
+                            */
+        );
+};
 
-      // ----------------------------------------------------------------------
-      // Command handler implementations
-      // ----------------------------------------------------------------------
-
-      //! Implementation for PAYLOAD_POWER_CMD command handler
-      //! Command that receives a power signal for payload from the ground station
-      void PAYLOAD_POWER_CMD_cmdHandler(
-          const FwOpcodeType opCode, /*!< The opcode*/
-          const U32 cmdSeq, /*!< The command sequence number*/
-          bool power /*!< 
-          boolean val, true -> ON, false -> OFF
-          */
-      );
-
-
-    };
-
-} // end namespace Ref
+}  // end namespace Ref
 
 #endif

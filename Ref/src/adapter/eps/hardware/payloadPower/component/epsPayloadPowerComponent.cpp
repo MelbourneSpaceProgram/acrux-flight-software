@@ -10,73 +10,60 @@
 //
 // ======================================================================
 
+#include <Ref/src/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponent.hpp>
 
-#include <Ref/adapter/eps/hardware/payloadPower/component/epsPayloadPowerComponent.hpp>
 #include "Fw/Types/BasicTypes.hpp"
 
 namespace Ref {
 
-  // ----------------------------------------------------------------------
-  // Construction, initialization, and destruction
-  // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// Construction, initialization, and destruction
+// ----------------------------------------------------------------------
 
-  epsPayloadPowerComponent ::
+epsPayloadPowerComponent ::
     epsPayloadPowerComponent(
-        const char *const compName
-    ) : epsPayloadPowerComponentComponentBase(compName)
-  {
+        const char *const compName) : epsPayloadPowerComponentComponentBase(compName) {
+}
 
-  }
-
-  void epsPayloadPowerComponent ::
+void epsPayloadPowerComponent ::
     init(
-        const NATIVE_INT_TYPE instance
-    )
-  {
+        const NATIVE_INT_TYPE instance) {
     epsPayloadPowerComponentComponentBase::init(instance);
-  }
+}
 
-  epsPayloadPowerComponent ::
-    ~epsPayloadPowerComponent()
-  {
+epsPayloadPowerComponent ::
+    ~epsPayloadPowerComponent() {
+}
 
-  }
+// ----------------------------------------------------------------------
+// Handler implementations for user-defined typed input ports
+// ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // Handler implementations for user-defined typed input ports
-  // ----------------------------------------------------------------------
-
-  Ref::cmdRecv epsPayloadPowerComponent ::
+Ref::cmdRecv epsPayloadPowerComponent ::
     receivePowerCommandIn_handler(
         const NATIVE_INT_TYPE portNum,
-        bool power
-    )
-  {
+        bool power) {
     // TODO return
-  }
+}
 
-  Ref::cmdRecv epsPayloadPowerComponent ::
+Ref::cmdRecv epsPayloadPowerComponent ::
     receivePowerStatusIn_handler(
         const NATIVE_INT_TYPE portNum,
-        bool status
-    )
-  {
+        bool status) {
     // TODO return
-  }
+}
 
-  // ----------------------------------------------------------------------
-  // Command handler implementations
-  // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// Command handler implementations
+// ----------------------------------------------------------------------
 
-  void epsPayloadPowerComponent ::
+void epsPayloadPowerComponent ::
     PAYLOAD_POWER_CMD_cmdHandler(
         const FwOpcodeType opCode,
         const U32 cmdSeq,
-        bool power
-    )
-  {
+        bool power) {
     // TODO
-    this->cmdResponse_out(opCode,cmdSeq,Fw::CmdResponse::OK);
-  }
+    this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
+}
 
-} // end namespace Ref
+}  // end namespace Ref

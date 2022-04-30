@@ -10,66 +10,55 @@
 //
 // ======================================================================
 
+#include <Ref/src/adapter/eps/hardware/batteryLevel/component/epsBatteryComponent.hpp>
 
-#include <Ref/adapter/eps/hardware/batteryLevel/component/epsBatteryComponent.hpp>
 #include "Fw/Types/BasicTypes.hpp"
 
 namespace Ref {
 
-  // ----------------------------------------------------------------------
-  // Construction, initialization, and destruction
-  // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// Construction, initialization, and destruction
+// ----------------------------------------------------------------------
 
-  epsBatteryComponent ::
+epsBatteryComponent ::
     epsBatteryComponent(
-        const char *const compName
-    ) : epsBatteryComponentComponentBase(compName)
-  {
+        const char *const compName) : epsBatteryComponentComponentBase(compName) {
+}
 
-  }
-
-  void epsBatteryComponent ::
+void epsBatteryComponent ::
     init(
         const NATIVE_INT_TYPE queueDepth,
-        const NATIVE_INT_TYPE instance
-    )
-  {
+        const NATIVE_INT_TYPE instance) {
     epsBatteryComponentComponentBase::init(queueDepth, instance);
-  }
+}
 
-  epsBatteryComponent ::
-    ~epsBatteryComponent()
-  {
+epsBatteryComponent ::
+    ~epsBatteryComponent() {
+}
 
-  }
+// ----------------------------------------------------------------------
+// Handler implementations for user-defined typed input ports
+// ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // Handler implementations for user-defined typed input ports
-  // ----------------------------------------------------------------------
-
-  Ref::ReturnType epsBatteryComponent ::
+Ref::ReturnType epsBatteryComponent ::
     epsBatLogicIn_handler(
         const NATIVE_INT_TYPE portNum,
-        F32 battery_level
-    )
-  {
+        F32 battery_level) {
     // TODO return
     this->cmdResponse_out(portNum, battery_level);
-  }
+}
 
-  // ----------------------------------------------------------------------
-  // Command handler implementations
-  // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// Command handler implementations
+// ----------------------------------------------------------------------
 
-  void epsBatteryComponent ::
+void epsBatteryComponent ::
     SEND_BATTERY_LEVEL_cmdHandler(
         const FwOpcodeType opCode,
         const U32 cmdSeq,
-        F32 battery
-    )
-  {
+        F32 battery) {
     // TODO
-    this->cmdResponse_out(opCode,cmdSeq,Fw::CmdResponse::OK);
-  }
+    this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
+}
 
-} // end namespace Ref
+}  // end namespace Ref
