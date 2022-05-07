@@ -31,21 +31,25 @@ RUN git clone https://github.com/fprime-community/fpp.git . \
 ENV FPP_INSTALL_DIR=/usr/local/bin/fpp
 ENV PATH=${PATH}:${FPP_INSTALL_DIR}
 
+# Set up node
+# RUN apt-get -y install npm
+# RUN npm install -g nodemon
+
 # Build and compile F Prime Layout
-RUN git clone https://github.com/fprime-community/fprime-layout.git fpl \
-    && cd fpl \
-    && ./install /usr/local/bin/fpl \
-    && cd /usr/src
-ENV FPL_INSTALL_DIR=/usr/local/bin/fpl
-ENV PATH=${PATH}:${FPL_INSTALL_DIR}
+# RUN git clone https://github.com/fprime-community/fprime-layout.git fpl \
+#     && cd fpl \
+#     && ./install /usr/local/bin/fpl \
+#     && cd /usr/src
+# ENV FPL_INSTALL_DIR=/usr/local/bin/fpl
+# ENV PATH=${PATH}:${FPL_INSTALL_DIR}
 
 # Build and compile F Prime Visualizer
-RUN git clone https://github.com/fprime-community/fprime-visual.git fpv \
-    && cd fpv \
-    && npm install \
-    && cd /usr/src
-ENV FPV_INSTALL_DIR=/usr/src/fpv
-ENV PATH=${PATH}:${FPV_INSTALL_DIR}
+# RUN git clone https://github.com/fprime-community/fprime-visual.git fpv \
+#     && cd fpv \
+#     && npm install \
+#     && cd /usr/src
+# ENV FPV_INSTALL_DIR=/usr/src/fpv
+# ENV PATH=${PATH}:${FPV_INSTALL_DIR}
 
 # Copy files over and update tools
 RUN pip install --upgrade fprime-tools fprime-gds
