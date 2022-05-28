@@ -1,4 +1,5 @@
 #include "StringUtils.hpp"
+
 #include <Fw/Types/Assert.hpp>
 #include <cstring>
 

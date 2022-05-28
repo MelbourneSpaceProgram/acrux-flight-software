@@ -55,6 +55,9 @@ ENV PATH=${PATH}:${FPP_INSTALL_DIR}
 
 RUN apt-get -y install libxml2 libxslt-dev
 
+# This is a massive install, avoid putting lines above
+RUN apt-get -y install gcc-arm-none-eabi
+
 # Copy files over and update tools
 RUN pip install --upgrade fprime-tools fprime-gds
 ENV PATH=${PATH}:~/.local/bin

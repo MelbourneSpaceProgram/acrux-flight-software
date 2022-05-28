@@ -53,6 +53,21 @@ if (FPRIME_USE_POSIX)
         "${CMAKE_CURRENT_LIST_DIR}/Linux/Directory.cpp"
     )
 endif()
+if(COMP_DEFS MATCHES "TGT_OS_TYPE_freertos")
+  list(APPEND SOURCE_FILES
+        "${CMAKE_CURRENT_LIST_DIR}/LogPrintf.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/freeRTOS/Queue.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/freeRTOS/Task.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/freeRTOS/InterruptLock.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/freeRTOS/IntervalTimer.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/freeRTOS/Mutex.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Posix/TaskId.cpp"
+        # Non-VxWorks basic support
+        "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/File.cpp"
+        "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/FileSystem.cpp"
+      )
+  list(APPEND MOD_DEPS "NucleoH7_freeRTOS")
+endif()
 # Darwin IPC queue implementation
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND SOURCE_FILES
