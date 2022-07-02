@@ -62,5 +62,6 @@ RUN apt-get -y install gcc-arm-none-eabi
 RUN pip install --upgrade fprime-tools fprime-gds
 ENV PATH=${PATH}:~/.local/bin
 RUN git config --global --add safe.directory /usr/src
-COPY . .
+COPY "./requirements.txt" .
 RUN pip install -r "/usr/src/requirements.txt"
+COPY . .
