@@ -22,9 +22,11 @@ RUN locale-gen en_US.UTF-8
 RUN apt-get update
 RUN apt-get -y install git cmake default-jre python3 python3-pip sbt scala
 
-# Build and compile fpp dep
-RUN git clone https://github.com/fprime-community/fpp.git . \
-    && cd compiler \
+# Build and compile FPP dep
+RUN git clone https://github.com/fprime-community/fpp.git fpp \
+    && cd fpp/compiler \
+    # if running into unexpected version errors, adjust this commit hash
+    && git checkout 687fedfc52a1f8e2b55c0f3f5764e1fcade19409 \
     && export FPP_SBT_FLAGS='--batch -Dsbt.server.forcestart=true' \
     && ./install /usr/local/bin/fpp \
     && cd /usr/src
