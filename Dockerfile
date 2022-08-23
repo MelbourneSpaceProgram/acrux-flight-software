@@ -26,7 +26,7 @@ RUN apt-get -y install git cmake default-jre python3 python3-pip sbt scala
 RUN git clone https://github.com/fprime-community/fpp.git fpp \
     && cd fpp/compiler \
     # if running into unexpected version errors, adjust this commit hash
-    && git checkout 687fedfc52a1f8e2b55c0f3f5764e1fcade19409 \
+    && git checkout a0b502bcf4f15317c62a20c4c40a5fd50c6146e1 \
     && export FPP_SBT_FLAGS='--batch -Dsbt.server.forcestart=true' \
     && ./install /usr/local/bin/fpp \
     && cd /usr/src
