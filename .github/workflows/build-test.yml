@@ -62,7 +62,7 @@ jobs:
             sudo cp --verbose --force --recursive $(pwd)/build-fprime-automatic-native/ ~/fprime-util-generate/
           fi
       # code is compiled with lint rules on
-      - name: compile + lint
+      - name: compile and lint
         run: fprime-util build --all --jobs "$(nproc || printf '%s\n' 1)"
 
   # compiles the full codebase, then runs unit tests
