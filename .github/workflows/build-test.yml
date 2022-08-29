@@ -8,7 +8,7 @@ on:
 
 jobs:
   # compiles the full codebase using clang tidy, which lints our code
-  compile and lint:
+  compile_lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
