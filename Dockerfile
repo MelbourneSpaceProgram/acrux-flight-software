@@ -6,6 +6,9 @@ RUN apt-get update
 # TZdata input was blocking docker build stage so this line circumvents
 RUN DEBIAN_FRONTEND=noninteractive TZ=Australia/Melbourne apt-get -y install tzdata
 
+# This is a massive install, avoid putting lines above
+RUN apt-get -y install gcc-arm-none-eabi
+
 # Install tools
 RUN apt-get install apt-transport-https curl gnupg -yqq locales
 
@@ -54,9 +57,6 @@ ENV PATH=${PATH}:${FPP_INSTALL_DIR}
 # ENV PATH=${PATH}:${FPV_INSTALL_DIR}
 
 RUN apt-get -y install libxml2 libxslt-dev
-
-# This is a massive install, avoid putting lines above
-RUN apt-get -y install gcc-arm-none-eabi
 
 # Copy files over and update tools
 RUN pip install --upgrade fprime-tools fprime-gds
