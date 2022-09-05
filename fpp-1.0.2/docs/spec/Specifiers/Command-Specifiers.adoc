@@ -1,0 +1,99 @@
+=== Command Specifiers
+
+A *command specifier* specifies a command as part of a
+<<Definitions_Component-Definitions,component definition>>.
+
+==== Syntax
+
+_command-kind_ `command` <<Lexical-Elements_Identifiers,_identifier_>> 
+_[_
+`(` <<Formal-Parameter-Lists,_param-list_>> `)`
+_]_
+_[_
+`opcode` <<Expressions,_expression_>>
+_]_
+_[_
+`priority` <<Expressions,_expression_>>
+_]_
+_[_
+_queue-full-behavior_
+_]_
+
+_command-kind_ is one of the following:
+
+* `async`
+
+* `guarded`
+
+* `sync`
+
+_queue-full-behavior_ is as for
+<<Specifiers_Port-Instance-Specifiers,port instance specifiers>>.
+
+==== Semantics
+
+* The command kind specifies the kind of the command.
+It is similar to the kind of a <<Specifiers_Port-Instance-Specifiers,
+port instance specifier>>, except that different commands
+on the same port can have different kinds.
+
+* The identifier names the command.
+
+* The parameter list specifies the command parameters.
+If there are no parameters, the list may be omitted.
+`ref` may not appear in any of the parameters.
+
+* The optional expression _e_ following `opcode` specifies the numeric
+opcode for the command.
+If _e_ is present, its type must be convertible to 
+<<Types_Internal-Types_Integer,_Integer_>>, and _e_ must evaluate
+to a nonnegative integer.
+If _e_ is not present, then the default opcode is either zero (for the first
+opcode appearing in a component) or the previous opcode plus one.
+
+* The optional expression _e_ appearing after the keyword `priority` specifies 
+a priority for the command on the input queue.
+The type of _e_ must be <<Type-Checking_Type-Conversion,convertible to>>
+<<Types_Internal-Types_Integer,_Integer_>>.
+The priority expression is valid only if the kind of the command is `async`.
+
+* The optional _queue-full-behavior_  specifies the behavior of the command
+when the input full is queue.
+This specifier is valid only if the kind of the command is `async`.
+If no specifier appears, then the default behavior is `assert`.
+
+==== Examples
+
+[source,fpp]
+----
+@ A sync command with no parameters
+sync command SyncNoParams opcode 0x00
+
+@ An async command with no parameters
+async command AsyncNoParams opcode 0x01
+
+@ A sync command with parameters
+sync command SyncParams(
+    param1: U32 @< Param 1
+    param2: string @< Param 2
+) opcode 0x02
+
+@ An async command with parameters
+async command AsyncParams(
+    param1: U32 @< Param 1
+    param2: string @< Param 2
+) opcode 0x03
+
+@ An async command with priority
+async command AsyncPriority(
+    param1: U32 @< Param 1
+    param2: string @< Param 2
+) opcode 0x04 priority 10
+
+@ An async command with priority and drop on queue full
+async command AsyncPriorityDrop(
+    param1: U32 @< Param 1
+    param2: string @< Param 2
+) opcode 0x05 priority 10 drop
+
+----

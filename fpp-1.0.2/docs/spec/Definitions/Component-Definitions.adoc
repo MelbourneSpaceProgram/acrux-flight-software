@@ -1,0 +1,217 @@
+=== Component Definitions
+
+A *component definition* defines an F Prime component.
+A component is a unit of function in the F Prime framework.
+Component instances communicate with each other across
+<<Definitions_Port-Definitions,ports>>.
+
+==== Syntax
+
+_component-kind_ `component` 
+<<Lexical-Elements_Identifiers,_identifier_>>
+`{` _component-member-sequence_ `}`
+
+_component-kind_ is one of the following:
+
+* `active`
+
+* `passive`
+
+* `queued`
+
+_component-member-sequence_ is an
+<<Element-Sequences,element sequence>> in 
+which each element is a *component member*,
+and the terminating punctuation is a semicolon.
+A component member is one of the following:
+
+* A <<Definitions_Constant-Definitions,constant definition>>
+
+* A <<Definitions_Struct-Definitions,struct definition>>
+
+* A <<Specifiers_Command-Specifiers,command specifier>>.
+All commands specified in a component must have distinct names and opcodes.
+
+* A <<Specifiers_Parameter-Specifiers,parameter specifier>>.
+All parameters specified in a component must have distinct names and identifier 
+values.
+
+* A <<Specifiers_Port-Instance-Specifiers,port instance specifier>>
+
+* A <<Specifiers_Telemetry-Channel-Specifiers,telemetry channel specifier>>.
+All telemetry channels specified in a component must have distinct names and 
+identifier values.
+
+* An <<Definitions_Abstract-Type-Definitions,abstract type definition>>
+
+* An <<Definitions_Array-Definitions,array definition>>
+
+* An <<Definitions_Enum-Definitions,enum definition>>
+
+* An <<Specifiers_Event-Specifiers,event specifier>>.
+All events specified in a component must have distinct names and identifier 
+values.
+
+* An <<Specifiers_Include-Specifiers,include specifier>>
+
+* An <<Specifiers_Internal-Port-Specifiers,internal port specifier>>
+
+The command, event, parameter, and telemetry specifiers are collectively
+referred to as *dictionary specifiers*.
+
+==== Semantics
+
+The identifier is the name of the component.
+The definitions inside the body of the component are
+qualified with the component name, as for 
+<<Definitions_Module-Definitions,module definitions>>.
+
+The component members must satisfy the following rules:
+
+. All names appearing in any general port specifiers, special port specifiers, 
+and internal port specifiers must be distinct.
+
+. No passive component may have an `async` `input` port specifier, an internal
+port specifier, or an `async` command specifier.
+
+. Each active or queued component must have at least one `async` `input` port 
+specifier, internal port specifier, or `async` command specifier.
+
+. Each component must provide ports as shown in the table below.
+
+|===
+|Condition|Requirement
+
+|If there are any command specifiers
+|There must be specifiers for ports `command recv`, `command reg`, and `command resp`.
+
+|If there are any event specifiers
+|There must be specifiers for ports `event`, `text event`, and `time get`.
+
+|If there are any parameter specifiers
+|There must be specifiers for ports `command recv`, `command reg`, `command resp`,
+`param get`, and `param set`.
+
+|If there are any telemetry specifiers
+|There must be specifiers for ports `telemetry` and `time get`.
+|===
+
+The dictionary specifiers must satisfy the following rules:
+
+. All commands must have distinct names and opcodes.
+
+. All events must have distinct names and identifier values.
+
+. All parameters must have distinct names and identifier values.
+
+. All telemetry channels must have distinct names and identifier values.
+
+==== Examples
+
+[source,fpp]
+----
+@ Receives commands from the ground or from a sequencer
+@ Dispatches commands to other components
+active component CommandDispatcher {
+
+  # ----------------------------------------------------------------------
+  # Constants 
+  # ----------------------------------------------------------------------
+
+  @ The number of com command input ports
+  constant numComCmdInPorts = 10
+
+  @ The number of command output ports
+  constant numCmdOutPorts = 20
+
+  # ----------------------------------------------------------------------
+  # General ports 
+  # ----------------------------------------------------------------------
+
+  @ Dispatches commands
+  output port cmdOut: [numCmdOutPorts] Fw.Cmd
+
+  @ Forwards received command responses
+  output port cmdResponseInOut: [numComCmdInPorts] Fw.CmdResponse
+
+  @ Receives com packets containing serialized commands
+  async input port comCmdIn: [numComCmdInPorts] Fw.Com
+  
+  @ Receives command registration requests
+  guarded input port cmdRegIn: [numCmdOutPorts] Fw.CmdReg
+
+  @ Receives command responses
+  async input port cmdResponseIn: Fw.CmdResponse
+
+  # ----------------------------------------------------------------------
+  # Special ports 
+  # ----------------------------------------------------------------------
+
+  @ Command receive port
+  command recv port cmdIn
+
+  @ Command registration port
+  command reg port cmdRegOut
+
+  @ Command response port
+  command resp cmdResponseOut
+
+  @ Event port
+  event port eventOut
+
+  @ Telemetry port
+  telemetry port tlmOut
+
+  @ Text event port
+  text event port textEventOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Commands 
+  # ----------------------------------------------------------------------
+
+  @ No-op command
+  async command NO_OP
+
+  @ No-op string command
+  async command NO_OP_STRING(
+      arg1: string size 256 @< The string command argument
+  )
+
+  ...
+
+  # ----------------------------------------------------------------------
+  # Events 
+  # ----------------------------------------------------------------------
+
+  @ Opcode registered event
+  event OpcodeRegistered(
+      regOpcode: Opcode @< The opcode to register
+      regPort: U32 @< The registration port
+      dispatchSlot: U32 @< The dispatch slot
+  ) severity diagnostic \
+    format "Opcode {} registered to port {} slot {}"
+
+  @ Opcode dispatched event
+  event OpcodeDispatched(
+      dispatchOpcode: Opcode @< The opcode dispatched
+      dispatchPort: U32 @< The dispatch port
+  ) severity command \
+    format "Opcode {} dispatched to port {}"
+
+  ...
+
+  # ---------------------------------------------------------------------- 
+  # Telemetry
+  # ---------------------------------------------------------------------- 
+
+  @ Number of commands dispatched
+  telemetry CommandsDispatched: U32 update on change
+
+  @ Number of command errors
+  telemetry CommandErrors: U32 update on change
+
+}
+----

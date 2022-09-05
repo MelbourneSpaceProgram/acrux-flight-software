@@ -1,0 +1,730 @@
+== Defining Component Instances
+
+As discussed in the previous section, in F Prime you
+define components and instantiate them.
+Then you construct a *topology*, which is a graph
+that specifies the connections between the components.
+This section explains how to define component instances.
+In the next section, we will explain how to
+construct topologies.
+
+=== Component Instance Definitions
+
+To instantiate a component, you write a *component instance definition*.
+The form of a component instance definition depends on the kind
+of the component you are instantiating: passive, queued, or active.
+
+==== Passive Components
+
+To instantiate a passive component, you write the following:
+
+* The keyword `instance`.
+
+* The <<Defining-Constants_Names,name>> of the instance.
+
+* A colon `:`.
+
+* The name of a <<Defining-Components_Component-Definitions,component definition>>.
+
+* The keywords `base` `id`.
+
+* An <<Defining-Constants_Expressions,expression>> denoting
+the *base identifier* associated with the component instance.
+
+The base identifier must resolve to a number.
+The FPP translator adds this number to each of the component-relative
+<<Defining-Components_Commands_Opcodes,command opcodes>>,
+<<Defining-Components_Events_Identifiers,event identifiers>>,
+<<Defining-Components_Telemetry_Identifiers,telemetry channel identifiers>>,
+and
+<<Defining-Components_Parameters_Identifiers,parameter identifiers>>
+specified in the component, as discussed in the previous section.
+The base identifier for the instance plus the component-relative
+opcode or identifier for the component gives the corresponding
+opcode or identifier for the instance.
+
+Here is an example:
+
+[source,fpp]
+----
+module Sensors {
+
+  @ A component for sensing engine temperature
+  passive component EngineTemp {
+
+    @ Schedule input port
+    sync input port schedIn: Svc.Sched
+
+    @ Telemetry port
+    telemetry port tlmOut
+
+    @ Time get port
+    time get port timeGetOut
+
+    @ Impulse engine temperature
+    telemetry ImpulseTemp: F32
+
+    @ Warp core temperature
+    telemetry WarpTemp: F32
+
+  }
+
+}
+
+module FSW {
+
+  @ Engine temperature instance
+  instance engineTemp: Sensors.EngineTemp base id 0x100
+
+}
+----
+
+We have defined a passive component `Sensors.EngineTemp` with three ports:
+a schedule input port for driving the component periodically on a rate group,
+a time get port for getting the time, and a telemetry port
+for reporting telemetry.
+(For more information on rate groups and the use of `Svc.Sched`
+ports, see the F Prime documentation.)
+We have given the component two telemetry channels:
+`ImpulseTemp` for reporting the temperature of the impulse engine,
+and `WarpTemp` for reporting the temperature of the warp core.
+
+Next we have defined an instance `FSW.engineTemp` of component `Sensors.EngineTemp`.
+Because the instance definition is in a different module from the
+component definition, we must refer to the component by its
+qualified name `Sensors.EngineTemp`.
+If we wrote
+
+[source,fpp]
+--------
+instance engineTemp: EngineTemp base id 0x100
+--------
+
+the FPP compiler would complain that the symbol `EngineTemp` is undefined
+(try it and see).
+
+We have specified that the base identifier of instance `FSW.engineTemp`
+is the hexadecimal number 0x100 (256 decimal).
+In the component definition, the telemetry channel `ImpulseTemp`
+has relative identifier 0, and the telemetry channel `WarpTemp`
+has relative identifier 1.
+Therefore the corresponding telemetry channels for the instance
+`FSW.engineTemp` have identifiers 0x100 and 0x101 (256 and 257)
+respectively.
+
+For consistency, the base identifier is required for all component instances,
+even instances that have no commands, events telemetry,
+or parameters.
+For each component instance _I_, the range of numbers between the base
+identifier and the base identifier plus the largest relative identifier
+is called the *identifier range* of _I_.
+All the numbers in the identifier range of _I_ are reserved for
+instance _I_ (even if they are not all used).
+No other component instance may have a base identifier in the
+identifier range of _I_.
+
+For example, this code is illegal:
+
+[source,fpp]
+-------
+module FSW {
+
+  @ Temperature sensor for the left engine
+  instance leftEngineTemp: Sensors.EngineTemp base id 0x100
+
+  @ Temperature sensor for the right engine
+  instance rightEngineTemp: Sensors.EngineTemp base id 0x101
+
+}
+-------
+
+The base identifier 0x101 for `rightEngineTemp` is inside the
+identifier range for `leftEngineTemp`, which goes from
+0x100 to 0x101, inclusive.
+
+==== Queued Components
+
+Instantiating a queued component is just like instantiating
+a passive component, except that you must also specify
+a queue size for the instance.
+You do this by writing the keywords `queue` `size` and
+the queue size after the base identifier.
+Here is an example:
+
+[source,fpp]
+----
+module Sensors {
+
+  @ A port for calibration input
+  port Calibration(cal: F32)
+
+  @ A component for sensing engine temperature
+  queued component EngineTemp {
+
+    @ Schedule input port
+    sync input port schedIn: Svc.Sched
+
+    @ Calibration input
+    async input port calibrationIn: Calibration
+
+    @ Telemetry port
+    telemetry port tlmOut
+
+    @ Time get port
+    time get port timeGetOut
+
+    @ Impulse engine temperature
+    telemetry ImpulseTemp: F32
+
+    @ Warp core temperature
+    telemetry WarpTemp: F32
+
+  }
+
+}
+
+module FSW {
+
+  @ Engine temperature sensor
+  instance engineTemp: Sensors.EngineTemp base id 0x100 \
+    queue size 10
+
+}
+----
+
+In the component definition, we have revised the example from the previous 
+section so that
+the `EngineTemp` component is queued instead of passive,
+and we have added an async input port for calibration input.
+In the component instance definition, we have specified a queue size of 10.
+
+==== Active Components
+
+Instantiating an active component is like instantiating a queued
+component, except that you may specify additional parameters
+that configure the OS thread associated with each component instance.
+
+*Queue size, stack size, and priority:*
+When instantiating an active component, you _must_
+specify a queue size, and you _may_ specify either or both of
+a stack size and priority.
+You specify the queue size in the same way as for a queued component.
+You specify the stack size by writing the keywords `stack` `size`
+and the desired stack size in bytes.
+You specify the priority by writing the keyword `priority`
+and a numeric priority.
+The priority number is passed to the OS operation for creating
+the thread, and its meaning is OS-specific.
+
+Here is an example:
+
+[source,fpp]
+----
+module Utils {
+
+  @ A component for compressing data
+  active component DataCompressor {
+
+    @ Uncompressed input data
+    async input port bufferSendIn: Fw.BufferSend
+
+    @ Compressed output data
+    output port bufferSendOut: Fw.BufferSend
+
+  }
+
+}
+
+module FSW {
+
+  module Default {
+    @ Default queue size
+    constant queueSize = 10
+    @ Default stack size
+    constant stackSize = 10 * 1024
+  }
+
+  @ Data compressor instance
+  instance dataCompressor: Utils.DataCompressor base id 0x100 \
+    queue size Default.queueSize \
+    stack size Default.stackSize \
+    priority 30
+
+}
+----
+
+We have defined an active component `Utils.DataCompressor`
+for compressing data.
+We have defined an instance of this component called
+`FSW.dataCompressor`.
+Our instance has base identifier 0x100, the default
+queue size, the default stack size, and priority 30.
+We have used 
+<<Defining-Constants,constant definitions>> for
+the default queue and stack sizes.
+
+We could also have omitted either or both of the stack size and priority
+specifiers.
+When you omit the stack size or priority from a component instance
+definition, F Prime supplies a default value appropriate to the
+target platform.
+With implicit stack size and priority, the `dataCompressor`
+instance looks like this:
+
+[source,fpp]
+--------
+instance dataCompressor: Utils.DataCompressor base id 0x100 \
+  queue size Default.queueSize
+--------
+
+*CPU affinity:*
+When defining an active component, you may specify
+a *CPU affinity*.
+The CPU affinity is a number whose meaning depends on
+the platform.
+Usually it is an instruction to the operating system
+to run the thread of the active component on a particular
+CPU, identified by number.
+
+To specify CPU affinity, you write the keyword `cpu`
+and the CPU number after the queue size, the stack size (if any),
+and the priority specifier (if any).
+For example:
+
+[source,fpp]
+--------
+instance dataCompressor: Utils.DataCompressor base id 0x100 \
+  queue size Default.queueSize \
+  stack size Default.stackSize \
+  priority 30 \
+  cpu 0
+--------
+
+This example is the same as the previous `dataCompressor`
+instance, except that we have specified that the thread
+associated with the instance should run on CPU 0.
+
+With implicit stack size and priority, the example looks like this:
+
+[source,fpp]
+--------
+instance dataCompressor: Utils.DataCompressor base id 0x100 \
+  queue size Default.queueSize \
+  cpu 0
+--------
+
+=== Specifying the Implementation
+
+When you define a component instance _I_, the FPP translator needs
+to know the following information about the {cpp} implementation of _I_:
+
+. The type (i.e., the name of the {cpp} class) that defines the
+implementation.
+
+. The location of the {cpp} header file that declares the implementation
+class.
+
+In most cases, the translator can infer this information.
+However, in some cases you must specify it manually.
+
+*The implementation type:*
+The FPP translator can automatically infer the implementation
+type if its qualified {cpp} class name matches the qualified
+name of the FPP component.
+For example, the {cpp} class name `A::B` matches the FPP component
+name `A.B`.
+
+If the names do not match, then you must provide the type
+associated with the implementation.
+You do this by writing the keyword `type` after the base identifier,
+followed by a <<Defining-Constants_Expressions_String-Values, string>>
+specifying the implementation type.
+
+For example, suppose we have a {cpp} class `Utils::SpecialDataCompressor`,
+which is a specialized implementation of the FPP component
+`Utils.DataCompressor`.
+By default, when we specify `Utils.DataCompressor` as the component name, the
+translator infers `Utils::DataCompressor` as the implementation type.
+Here is how we specify the implementation type `Utils::SpecialDataCompressor`:
+
+[source,fpp]
+--------
+instance dataCompressor: Utils.DataCompressor base id 0x100 \
+  type "Utils::SpecialDataCompressor" \
+  queue size Default.queueSize \
+  cpu 0
+--------
+
+*The header file:*
+The FPP translator can automatically locate the header file for _I_
+if it conforms to the following rules:
+
+. The name of the header file is `Name.hpp`, where `Name`
+is the name of the component in the FPP model, without
+any module qualifiers.
+
+. The header file is located in the same directory as the FPP
+source file that defines the component.
+
+For example, the F Prime repository contains a reference FSW implementation
+with instances defined in the file `Ref/Top/instances.fpp`.
+One of the instances is `SG1`.
+Its definition reads as follows:
+
+[source,fpp]
+--------
+instance SG1: Ref.SignalGen base id 0x2100 \
+  queue size Default.queueSize
+--------
+
+The FPP component `Ref.SignalGen` is
+defined in the directory `Ref/SignalGen/SignalGen.fpp`,
+and the implementation class `Ref::SignalGen` is declared in
+the header file `Ref/SignalGen/SignalGen.hpp`.
+In this case, the header file follows rules (1) and (2)
+stated above, so the FPP translator can automatically locate
+the file.
+
+If the implementation header file does not follow
+rules (1) and (2) stated above, then you must specify
+the name and location of the header file by hand.
+You do that by writing the keyword `at` followed by 
+a <<Defining-Constants_Expressions_String-Values, string>>
+specifying the header file path.
+The header file path is relative to the directory
+containing the source file that defines the component
+instance.
+
+For example, the F Prime repository has a directory
+`Svc/Time` that contains an FPP model for a component `Svc.Time`.
+Because the {cpp} implementation for this component
+is platform-specific, the directory `Svc/Time` doesn't
+contain any implementation.
+Instead, when instantiating the component, you have to
+provide the header file to an implementation located
+in a different directory.
+
+The F Prime repository also provides a Linux-specific implementation
+of the `Time` component in the directory `Svc/LinuxTime`.
+The file `Ref/Top/instances.fpp` contains an instance definition
+`linuxTime` that reads as follows:
+
+[source,fpp]
+----
+instance linuxTime: Svc.Time base id 0x4500 \
+  type "Svc::LinuxTime" \
+  at "../../Svc/LinuxTime/LinuxTime.hpp"
+----
+
+This definition says to use the implementation of the component
+`Svc.Time` with {cpp} type name `Svc::LinuxTime` defined in the header
+file `../../Svc/LinuxTime/LinuxTime.hpp`.
+
+=== Init Specifiers
+
+In an F Prime FSW application, each component instance _I_
+has some associated {cpp} code
+for setting up _I_ when FSW starts up
+and tearing down _I_ when FSW exits.
+Much of this code can be inferred from the FPP model,
+but some of it is implementation-specific.
+For example, each instance of the standard F Prime command sequencer
+component has a method `allocateBuffer` that the FSW must 
+call during setup to allocate the sequence buffer
+for that instance.
+The FPP model does not represent this function;
+instead, you have to provide
+the function call directly in {cpp}.
+
+To do this, you write one or more *init specifiers*
+as part of a component instance definition.
+An init specifier names a phase
+of the setup or teardown process and
+provides a snippet of literal {cpp} code.
+The FPP translator pastes the snippet into the setup
+or teardown code according to the phase named in
+the specifier.
+(Strictly speaking, the init specifier should be called
+a "setup or teardown specifier."
+However, most of the code is in fact initialization code,
+and so FPP uses "init" as a shorthand name.)
+
+==== Execution Phases
+
+The FPP translator uses init specifiers when it generates
+code for an F Prime topology.
+We will have more to say about topology generation in the
+next section.
+For now, you just need to know the following:
+
+. A topology is a unit of an FPP model that specifies the top-level
+structure of an F Prime application (the component instances
+and their connections).
+
+. Each topology has a name, which we will refer to here generically as _T_.
+
+. When generating {cpp} code for topology _T_, the code generator produces
+files _T_ `TopologyAc.hpp` and _T_ `TopologyAc.cpp`.
+
+The generated code in _T_ `TopologyAc.hpp` and _T_ `TopologyAc.cpp`
+is divided into several phases of execution.
+Table <<execution-phases>> shows the execution phases 
+recognized by the FPP code generator.
+In this table, _T_ is the name of a topology and _I_ is the
+name of a component instance.
+The columns of the table have the following meanings:
+
+* *Phase:* The symbol denoting the execution phase.
+These symbols are the enumerated constants of the
+<<Defining-Enums,enum>> `Fpp.ToCpp.Phases` defined in
+`Fpp/ToCpp.fpp` in the F Prime repository.
+
+* *Generated File:* The generated file for topology _T_
+that contains the definition:
+either _T_ `TopologyAc.hpp` (for compile-time symbols)
+or _T_ `TopologyAc.cpp` (for link-time symbols).
+
+* *Intended Use:* The intended use of the {cpp} code snippet
+associated with the instance _I_ and the phase.
+
+* *Where Placed:* Where FPP places the code snippet
+in the generated file.
+
+* *Default Code:* Whether FPP generates default code if 
+there is no init specifier for instance _I_
+and for this phase.
+If there is an init specifier, then it replaces any
+default code.
+
+[[execution-phases]]
+.Execution Phases
+|===
+|Phase|Generated File|Intended Use|Where Placed|Default Code
+
+|`configConstants`
+|_T_ `TopologyAc.hpp`
+|{cpp} constants for use in constructing and
+initializing an instance _I_.
+|In the namespace `ConfigConstants::` _I_.
+|None.
+
+|`configObjects`
+|_T_ `TopologyAc.cpp`
+|Statically declared {cpp} objects for use in
+constructing and initializing instance _I_.
+|In the namespace `ConfigObjects::` _I_.
+|None.
+
+|`instances`
+|_T_ `TopologyAc.cpp`
+|A constructor for an instance _I_ that has a non-standard
+constructor format.
+|In an anonymous (file-private) namespace.
+|The standard constructor call for _I_.
+
+|`initComponents`
+|_T_ `TopologyAc.cpp`
+|Initialization code for an instance _I_ that has a non-standard
+initialization format.
+|In the file-private function `initComponents`.
+|The standard call to `init` for _I_.
+
+|`configComponents`
+|_T_ `TopologyAc.cpp`
+|Implementation-specific configuration code for an instance _I_.
+|In the file-private function `configComponents`.
+|None.
+
+|`regCommands`
+|_T_ `TopologyAc.cpp`
+|Code for registering the commands of _I_ (if any)
+with the command dispatcher.
+Required only if _I_ has a
+non-standard command registration format.
+|In the file-private function `regCommands`.
+|The standard call to `regCommands` if _I_ has commands;
+otherwise none.
+
+|`readParameters`
+|_T_ `TopologyAc.cpp`
+|Code for reading parameters from a file.
+Ordinarily used only when _I_ is the parameter database.
+|In the file-private function `readParameters`.
+|None.
+
+|`loadParameters`
+|_T_ `TopologyAc.cpp`
+|Code for loading parameter values from the parameter database.
+Required only if _I_ has a non-standard parameter-loading
+format.
+|In the file-private function `loadParameters`.
+|The standard call to `loadParameters` if _I_
+has parameters; otherwise none.
+
+|`startTasks`
+|_T_ `TopologyAc.cpp`
+|Code for starting the task (if any) of _I_.
+|In the file-private function `startTasks`.
+|The standard call to `startTasks` if _I_
+is an active component; otherwise none.
+
+|`stopTasks`
+|_T_ `TopologyAc.cpp`
+|Code for stopping the task (if any) of _I_.
+|In the file-private function `stopTasks`.
+|The standard call to `exit` if _I_
+is an active component; otherwise none.
+
+|`freeThreads`
+|_T_ `TopologyAc.cpp`
+|Code for freeing the thread associated with _I_.
+|In the file-private function `freeThreads`.
+|The standard call to `join` if _I_ is an
+active component; otherwise none.
+
+|`tearDownComponents`
+|_T_ `TopologyAc.cpp`
+|Code for deallocating the allocated memory
+(if any) associated with _I_.
+|In the file-private function `tearDownComponents`.
+|None.
+
+|===
+
+You will most often need to write code for `configConstants`,
+`configObjects`, and `configComponents`.
+These phases often require implementation-specific input that
+cannot be provided in any other way, except to write an init specifier.
+
+In theory you should never have to write code for `instances`
+or `initComponents` -- this code can be be standardized --
+but in practice not all F Prime components conform to the standard,
+so you may have to override the default.
+
+You will typically not have to write code for `regCommands`,
+`readParameters`, and `loadParameters` -- the framework can generate
+this code automatically -- except that the parameter database
+instance needs one line of special code for reading its parameters.
+
+Code for `startTasks`, `stopTasks`,
+and `freeThreads` is required only if the user-written implementation of
+a component instance manages its own F Prime task.
+If you use a standard F Prime active component, then the framework
+manages the task, and this code is generated automatically.
+
+Code for `tearDownComponents` is required only if a component
+instance needs to deallocate memory or release resources on program exit.
+
+==== Writing Init Specifiers
+
+You may write one or more init specifiers as part of a component
+instance definition.
+The instance specifiers, if any, come at the end of the
+definition and must be enclosed in curly braces.
+The instances specifiers form an 
+<<Defining-Constants_Multiple-Definitions-and-Element-Sequences,element sequence>>
+with a semicolon as the optional terminating punctuation. 
+
+To write an init specifier, you write the following:
+
+* The keyword `phase`.
+
+* The
+<<Defining-Component-Instances_Init-Specifiers_Execution-Phases,
+execution phase>>
+of the init specifier.
+
+* A
+<<Defining-Constants_Expressions_String-Values, string>>
+that provides the code snippet.
+
+It is usually convenient, but not required, to use a multiline string
+for the code snippet.
+
+As an example, here is the component instance definition for the
+command sequencer instance `cmdSeq` from the F Prime reference
+deployment located at `Ref/Top/instances.fpp`:
+
+[source,fpp]
+--------
+instance cmdSeq: Svc.CmdSequencer base id 0x0600 \
+  queue size Default.queueSize \
+  stack size Default.stackSize \
+  priority 100 \
+{
+
+  phase Fpp.ToCpp.Phases.configConstants """
+  enum {
+    BUFFER_SIZE = 5*1024
+  };
+  """
+
+  phase Fpp.ToCpp.Phases.configComponents """
+  cmdSeq.allocateBuffer(
+      0,
+      Allocation::mallocator,
+      ConfigConstants::cmdSeq::BUFFER_SIZE
+  );
+  """
+
+  phase Fpp.ToCpp.Phases.tearDownComponents """
+  cmdSeq.deallocateBuffer(Allocation::mallocator);
+  """
+
+}
+--------
+
+The code for `configConstants` provides a constant `BUFFER_SIZE`
+that is used in the `configComponents` phase.
+The code for `configComponents` calls `allocateBuffer`, passing
+in an allocator object that is declared elsewhere.
+(In the section on
+<<Writing-C-Plus-Plus-Implementations_Implementing-Deployments,
+implementing deployments>>, we will explain where this allocator
+object is declared.)
+The code for `tearDownComponents` calls `deallocateBuffer` to
+deallocate the sequence buffer, passing in the allocator
+object again.
+
+As another example, here is the instance definition for the parameter
+database instance `prmDb` from the Ref deployment:
+
+[source,fpp]
+--------
+instance prmDb: Svc.PrmDb base id 0x0D00 \
+  queue size Default.queueSize \
+  stack size Default.stackSize \
+  priority 96 \
+{
+
+  phase Fpp.ToCpp.Phases.instances """
+  Svc::PrmDb prmDb(FW_OPTIONAL_NAME("prmDb"), "PrmDb.dat");
+  """
+
+  phase Fpp.ToCpp.Phases.readParameters """
+  prmDb.readParamFile();
+  """
+
+}
+--------
+
+Here we provide code for the `instances` phase because the constructor 
+call for this component is nonstandard -- it takes the parameter
+file name as an argument.
+In the `readParameters` phase, we provide the code for reading the parameters
+from the file.
+As discussed above, this code is needed only for the parameter database
+instance.
+
+When writing init specifiers, you may read (but not modify) a special value
+`state` that you define in a handwritten main function.
+This value lets you pass application-specific information from the
+handwritten code to the auto-generated code.
+We will explain the special `state` value further in the
+section on <<Writing-C-Plus-Plus-Implementations_Implementing-Deployments,
+implementing deployments>>.
+
+For more examples of init specifiers in action, see the rest of
+the file `Ref/Top/instances.fpp` in the F Prime repository.
+In particular, the init specifiers for the `comm` component
+use the `state` value that we just mentioned.

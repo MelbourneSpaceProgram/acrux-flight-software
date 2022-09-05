@@ -1,0 +1,97 @@
+=== Event Specifiers
+
+An *event specifier* specifies an event report as part of a
+<<Definitions_Component-Definitions,component definition>>.
+
+==== Syntax
+
+`event` 
+<<Lexical-Elements_Identifiers,_identifier_>>
+_[_
+`(` <<Formal-Parameter-Lists,_param-list_>> `)`
+_]_
+`severity` _severity_ 
+_[_
+`id` <<Expressions,_expression_>>
+_]_
+`format` <<Expressions_String-Literals,_string-literal_>>
+_[_
+`throttle` <<Expressions,_expression_>>
+_]_
+
+_severity_ is one of the following:
+
+* `activity` `high`
+* `activity` `low`
+* `command`
+* `diagnostic`
+* `fatal`
+* `warning` `high`
+* `warning` `low`
+
+==== Semantics
+
+* The identifier names the event.
+
+* _severity_ specifies the severity of the event.
+
+* The parameter list specifies the event parameters.
+If there are no parameters, the list may be omitted.
+`ref` may not appear in any of the parameters.
+
+* The optional expression _e_ following `id` specifies the numeric
+identifier for the event.
+If _e_ is present, then type of _e_ must be convertible to 
+<<Types_Internal-Types_Integer,_Integer_>>, and _e_ must evaluate
+to a nonnegative integer.
+If _e_ is not present, then the default identifier is either zero (for the 
+first
+event appearing in a component) or the previous event identifier plus one.
+
+* The string following `format` is a
+<<Format-Strings,format string>> that formats the event for display on the
+ground. The arguments to the format string are the values bound to the event
+parameters. A numeric format is allowed for any
+argument whose type is a <<Types_Internal-Types_Numeric-Types,numeric type>>.
+
+* The optional expression _e_ following `throttle` specifies the maximum number
+of times to emit the event before throttling it.
+The type of _e_ must be convertible to 
+<<Types_Internal-Types_Integer,_Integer_>>.
+
+==== Examples
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ An enumeration of cases
+enum Case { A, B, C }
+
+@ Event 0
+event Event0 \
+  severity activity low \
+  id 0x00 \
+  format "Event 0 occurred"
+
+@ Event 1
+@ Sample output: "Event 1 occurred with argument 42"
+event Event1(
+  arg1: U32 @< Argument 1
+) \
+  severity activity high \
+  id 0x01 \
+  format "Event 1 occurred with argument {}"
+
+@ Event 2
+@ Sample output: "Saw value [ 0.001, 0.002, 0.003 ] for case A"
+event Event2(
+  case: Case @< The case
+  value: F64x3 @< The value
+) \
+  severity warning low \
+  id 0x02 \
+  format "Saw value {} for case {}" \
+  throttle 10
+----

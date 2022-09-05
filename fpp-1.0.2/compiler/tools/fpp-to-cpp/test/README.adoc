@@ -1,0 +1,22 @@
+== fpp-to-cpp/test
+
+This is the test directory for the `fpp-to-cpp` tool.
+
+=== Running Tests
+
+To run the tests, execute `./test` in this directory.
+All the tests should pass.
+
+=== Developing Tests
+
+When developing tests, run the tool `check-cpp`.
+This makes sure that all the `*.ref.cpp` files are valid {cpp} files.
+
+Before running `check-cpp`, do the following:
+
+. Clone the
+https://github.com/nasa/fprime[F Prime repository]
+and check out branch release/v3.0.0.
+
+. Set the shell environment variable `FPRIME` to point to
+the root of the F Prime repository.

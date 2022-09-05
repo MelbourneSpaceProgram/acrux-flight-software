@@ -1,0 +1,99 @@
+=== Enum Definitions
+
+An *enum definition* does two things:
+
+.  It defines a type stem:[T] and associates a name stem:[N] with stem:[T]. Elsewhere
+in the model, you can use stem:[N] to refer to stem:[T].
+
+.  It associates several named constants stem:[C_1, ..., C_n] with stem:[T].  
+These
+constants, called the *enumerated constants* of stem:[T], are the values that
+an expression of type stem:[T] may attain. Elsewhere in the model, you can
+use the <<Scoping-of-Names_Qualified-Identifiers,qualified
+identifiers>> stem:[N] `.` stem:[C_1, ..., N] `.` stem:[C_n] 
+to refer to the enumerated
+constants.
+
+==== Syntax
+
+`enum` <<Lexical-Elements_Identifiers,_identifier_>>
+_[_ `:` <<Type-Names,_type-name_>> _]_
+`{` _enum-constant-sequence_ `}`
+_[_
+`default` <<Expressions,_expression_>> 
+_]_
+
+_enum-constant-sequence_ is an
+<<Element-Sequences,element sequence>> in which the elements are
+<<Definitions_Enumerated-Constant-Definitions,enumerated
+constant definitions>>, and the terminating punctuation is a comma.
+
+==== Semantics
+
+The enumerated constants have the <<Types_Enum-Types,enum type>> defined in the 
+enum definition. During
+<<Analysis-and-Translation,analysis>>, they are represented as values of 
+a primitive integer type, called the
+*representation type*.
+
+There must be at least one enumerated constant.
+No two enumerated constants may have the same identifier.
+Each enumerated constant must <<Evaluation,evaluate>> to
+a compile-time constant whose type is
+<<Type-Checking_Type-Conversion,convertible to>> the
+representation type.
+No two enumerated constants may have the same value after the conversion.
+
+The expression following the keyword `default` is optional.
+If present, it specifies the <<Types_Default-Values,default value>> associated 
+with the enum definition.
+The type of the expression must be the type of the enum definition.
+
+==== Inferred Representation Type
+
+If _type-name_ does not appear after the identifier, then
+the implied representation type is `I32`.
+
+==== Explicit Representation Type
+
+If _type-name_ appears after the identifier, then the semantic
+analyzer does the following:
+
+. Check that _type-name_ names a <<Types_Primitive-Integer-Types,primitive 
+integer type>>.
+If not, throw an error.
+
+. Use stem:[T] as the representation type.
+
+==== Examples
+
+The following example shows two definitions. In the first one, the implied
+representation type is `I32`.
+In the second one, the representation type is explicitly given as `U8`.
+
+[source,fpp]
+----
+enum Gunfighters {
+  IL_BUONO
+  IL_BRUTTO
+  IL_CATTIVO
+}
+
+enum U8Gunfighters: U8 {
+  IL_BUONO
+  IL_BRUTTO
+  IL_CATTIVO
+}
+----
+
+The next example shows an enum definition with an explicit
+default value.
+
+[source,fpp]
+----
+enum Status {
+  YES
+  NO
+  MAYBE
+} default MAYBE
+----

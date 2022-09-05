@@ -1,0 +1,180 @@
+== Types
+
+=== Primitive Integer Types
+
+The *primitive integer types* correspond to the 
+<<Type-Names_Primitive-Integer-Type-Names,primitive integer type names>>
+and are written in the same way, e.g., `U32`.
+
+=== Floating-Point Types
+
+The *floating-point types* correspond to the
+<<Type-Names_Floating-Point-Type-Names,floating-point type names>>
+and are written in the same way, e.g., `F64`.
+
+=== Primitive Numeric Types
+
+The <<Types_Primitive-Integer-Types,primitive integer types>>
+together with the <<Types_Floating-Point-Types,floating-point types>> are 
+called the *primitive numeric types*.
+
+=== The Boolean Type
+
+The *Boolean type* corresponds to the
+<<Type-Names_The-Boolean-Type-Name,Boolean type name>>.
+It is written `bool`.
+
+=== Primitive Types
+
+Together, the <<Types_Primitive-Numeric-Types,primitive numeric types>>
+and the
+<<Types_The-Boolean-Type,Boolean type>>
+are called the *primitive types*.
+
+=== String Types
+
+The *string types* correspond to the
+<<Type-Names_String-Type-Names,string type names>>.
+A string type is written `string` or `string size` _n_,
+where _n_ is an integer value greater than zero.
+There is one string type `string` and one string type `string` _n_
+for each legal value of _n_.
+
+=== Array Types
+
+An *array type* is a type associated with an
+<<Definitions_Array-Definitions,array definition>>.
+There is one array type per array definition.
+Each array type is computed after resolving constants,
+so an array type has a constant integer value for its size.
+An array type is written using its 
+<<Scoping-of-Names_Names-of-Definitions,unique qualified
+name>>.
+
+=== Enum Types
+
+An *enum type* is a type associated with an
+<<Definitions_Enum-Definitions,enum definition>>.
+There is one enum type per enum definition.
+An enum type is written using its
+<<Scoping-of-Names_Names-of-Definitions,unique qualified
+name>>.
+
+=== Struct Types
+
+A *struct type* is a type associated with a
+<<Definitions_Struct-Definitions,struct definition>>.
+There is one struct type per struct definition.
+A struct type is written using its
+<<Scoping-of-Names_Names-of-Definitions,unique qualified
+name>>.
+
+=== Abstract Types
+
+An *abstract type* is a type associated with an
+<<Definitions_Abstract-Type-Definitions,abstract type definition>>.
+There is is one abstract type per abstract type definition.
+An abstract type is written using its 
+<<Scoping-of-Names_Names-of-Definitions,unique qualified
+name>>.
+
+=== Internal Types
+
+*Internal types* do not have syntactic names in FPP source models.
+The compiler assigns these types to expressions during type checking.
+
+==== Integer
+
+The type _Integer_ represents all integer values, without regard
+to bit width.
+
+==== Integer Types
+
+<<Types_Internal-Types_Integer,_Integer_>> together with the 
+<<Types_Primitive-Integer-Types,primitive integer types>> are called
+the *integer types*.
+
+==== Numeric Types
+
+<<Types_Internal-Types_Integer,_Integer_>> together with the 
+<<Types_Primitive-Numeric-Types,primitive numeric types>> are called
+the *numeric types*.
+
+==== Anonymous Array Types
+
+The type _[_ _n_ _]_ _T_, where _n_
+is an integer and _T_ is a type, represents an array of _n_ elements,
+each of type _T_.
+
+==== Anonymous Struct Types
+
+The type _{_ stem:[m_1] _:_ stem:[T_1, ...,] stem:[m_n] _:_ stem:[T_n] _}_,
+where each stem:[m_i] is an identifier and each stem:[T_i] is a type,
+represents a struct with members stem:[m_i] _:_ stem:[T_i].
+
+The order of the members is not significant.
+For example, `{ a: U32, b: F32 }` represents the same
+type as `{ b : F32, a: U32 }`.
+
+=== Types with Numeric Members
+
+A type *has numeric members* if it is one of the following:
+
+* A <<Types_Internal-Types_Numeric-Types,numeric type>>.
+
+* An <<Types_Array-Types,array type>> or
+<<Types_Internal-Types_Anonymous-Array-Types,anonymous array type>> whose 
+member type has numeric members.
+
+* A <<Types_Struct-Types,struct type>> or
+<<Types_Internal-Types_Anonymous-Struct-Types,anonymous struct type>> whose 
+member types all have numeric members.
+
+=== Default Values
+
+Every type _T_ with a syntactic name in FPP has an associated *default 
+value*.
+In generated C++ code, this is the value that is used to initialize a variable 
+of type _T_
+when no other initializer is specified.
+Default values are important, because they ensure that in generated code,
+every variable is initialized when it is created.
+
+* The default value associated with each 
+<<Types_Primitive-Numeric-Types,primitive numeric type>> is zero.
+
+* The default value associated with
+<<Types_The-Boolean-Type,`bool`>> is `false`.
+
+* The default value associated with any
+<<Types_String-Types,string type>> is the empty string.
+
+* The default value associated with an
+<<Types_Array-Types,array type>> _T_ is (1)
+the default value specified in the array definition,
+if one is given; otherwise (2) the unique value
+of type _T_ that has the default value of the member type
+of _T_ at each member.
+See the section on <<Definitions_Array-Definitions,
+array definitions>> for examples.
+
+* The default value associated with an
+<<Types_Enum-Types,enum type>> is (1) the default value
+specified in the enum definition, if one is given; 
+otherwise (2) the first
+enumerated constant appearing in the enum definition.
+
+* The default value associated with a
+<<Types_Struct-Types,struct type>> _T_ is (1)
+the default value specified in the struct definition,
+if one is given; otherwise (2) the unique value of type
+_T_ that has the default value of the member type stem:[T_i]
+for each member stem:[m_i] `:` stem:[T_i] of _T_.
+See the section on <<Definitions_Struct-Definitions,
+struct definitions>> for examples.
+
+* The default value associated with an
+<<Types_Abstract-Types,abstract type>> _T_ is the
+<<Values_Abstract-Type-Values,single value associated with _T_>>.
+This value is left abstract in the FPP model; the implementation
+of _T_ must provide a concrete value.

@@ -1,0 +1,148 @@
+= Compiler
+
+== Requirements
+
+* A Unix environment, such as Linux, Mac OS, or the Windows Subsystem for Linux.
+* The https://www.scala-sbt.org[Simple Build Tool (sbt)] for Scala.
+
+== Installing
+
+To install in the `bin` directory, run `./install`.
+This step also runs all the Scala unit tests.
+To install to a different directory, run `./install` _dir-name_.
+
+*Setting the shell path:*
+Once you have installed the FPP compiler to a directory `FPP_INSTALL_DIR`, you
+should put `FPP_INSTALL_DIR` in your shell path. For example, in bash:
+
+[source,bash]
+----
+% export FPP_INSTALL_DIR=[path-to-fpp-install-dir]
+% export PATH=$PATH:$FPP_INSTALL_DIR
+----
+
+That way you can run the tools from anywhere.
+
+*Available tools:* The available tools are as follows:
+
+* `fpp-check`
+* `fpp-depend`
+* `fpp-filenames`
+* `fpp-format`
+* `fpp-from-xml`
+* `fpp-locate-defs`
+* `fpp-locate-uses`
+* `fpp-syntax`
+* `fpp-to-cpp`
+* `fpp-to-xml`
+
+See https://github.com/fprime-community/fpp/wiki/Tools for more information.
+
+*Installing with custom sbt flags:*
+For some installations, you may need to pass special flags
+to `sbt`.
+For example, when installing FPP inside a Docker image,
+you may need to use the flags `--batch -Dsbt.server.forcestart=true`.
+
+To do this, set the environment variable `FPP_SBT_FLAGS`.
+For example:
+
+[source,bash]
+----
+% export FPP_SBT_FLAGS='--batch -Dsbt.server.forcestart=true'
+% ./install
+----
+
+== Testing
+
+There are two kinds of tests: unit tests written in Scala and
+unit tests that exercise the command-line tools.
+
+. Run `./install` or `./sbt test` to run all Scala unit tests.
+
+. Run `./test` to run all command-line unit tests.
+Do this after running `./install`.
+If you update the build, rerun `./install` before running `./test`.
+
+Some of the command-line unit tests run `scalac` (the Scala compiler).
+To run these tests successfully, you will need Scala 2.13.1 or greater
+installed and available on the command line.
+
+== Development
+
+. Start up the sbt shell.
+
+. In the shell, run `compile` to compile everything, `test` to run all 
+Scala unit tests,
+and `assembly` to create jar files.
+The `install` script runs these commands automatically.
+It also moves the jar files to the install directory and puts executable
+shell scripts there.
+
+== Cleaning
+
+To clean the repository, run `./clean` in this directory.
+This will run `sbt clean` and delete generated build
+and test artifacts.
+
+== Building Native Binaries
+
+*Running the release script:*
+You can use the `release` script in this directory to build native
+binaries of the FPP tools.
+The script uses the `native-image` tool of GraalVM to convert JVM (Java
+Virtual Machine) programs stored as Java Archive (JAR) files to
+native binaries.
+
+To use the `release` script, you must carry out the following steps:
+
+. Install GraalVM.
+For example, using MacPorts on Mac OS:
++
+[source,bash]
+----
+% sudo port install openjdk11-graalvm
+----
+
+. Set the global environment variable `GRAALVM_JAVA_HOME` to the `Home` directory
+associated with the GraalVM installation in step 1.
+For example, on Mac OS:
++
+[source,bash]
+----
+% export GRAALVM_JAVA_HOME=Library/Java/JavaVirtualMachines/openjdk11-graalvm/Contents/Home
+----
+
+. Run `sudo $GRAALVM_JAVA_HOME/bin/gu install native-image`
+*You must rerun this step every time you update or reinstall GraalVM (step 1).*
+If you update or reinstall GraalVM, and you forget to re-install `native-image`,
+then your GraalVM installation and your `native-image` installation will be out
+of sync, and the native image build may not work.
+
+. Run `./release` in this directory.
+The script will build the native binary tools and install them at
+`native-fpp-[platform name]`.
+
+. The previous step installs FPP tools with the tracing agent enabled
+(see below).
+To install the standard version of the FPP tools, run `./install`.
+
+*Running the tracing agent:*
+Before running `native-image` on a JVM program, you must first run the
+JVM program with a tracing agent enabled and record the results,
+The directory `lib/src/main/resources/META-INF` stores the results of
+running the FPP unit tests with the tracing agent enabled.
+Occasionally when developing FPP, you may need to re-run the tracing
+agent to capture new runtime behavior.
+To do that, use the following procedure:
+
+. Run `./install-trace` to install JVM versions of the FPP tools with
+tracing enabled in the `bin` directory.
+
+. Run `./test` to use the installed tools to run the unit tests.
+This will run the tracing agent and update the trace files.
+
+. Commit the updated trace files to the repository.
+
+Remember to run `./install` to install the standard version
+of the tools if you no longer want to run the tracing agent.

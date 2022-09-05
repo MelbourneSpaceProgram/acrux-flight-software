@@ -1,0 +1,110 @@
+=== String Literals
+
+A *string literal expression* is a single-line string literal
+or a multiline string literal.
+In this section
+
+* *Literal string* means a literal string appearing
+in the FPP source text.
+
+* *Interpreted string* means the sequence
+of characters represented by the literal string.
+
+* *String interpretation* is the process of converting a literal
+string to an interpreted string.
+
+* A *newline character* is the NL character (ASCII code 0x0A).
+
+* An *extended newline character* is the NL character (ASCII code 0x0A),
+optionally preceded by a CR character (ASCII code 0x0D).
+
+==== Single-Line String Literals
+
+A *single-line string literal* is a sequence of *single-line literal characters*
+enclosed in double
+quote characters `"`.
+A single-line literal character is one of the following:
+
+* Any character other than the newline character, `"`, or `\`.
+
+* `\` followed by any character _c_ other than the newline character.
+In this case we say that the character _c_ is *escaped*.
+
+The characters of the interpreted string correspond one-to-one
+to the literal characters of the string, in the same order,
+according to the following rule:
+if the literal character is _c_ or `\` _c_, then the corresponding character
+of the interpreted string is _c_.
+
+*Examples:*
+
+* `"abc"` is a valid string consisting of the characters `a`, `b`, and `c`.
+
+* `"ab\""` is a valid string consisting of the characters `a`, `b`, and `"`.
+
+* `"ab\\\""` is a valid string consisting of the characters `a`, `b`, `\`, and `"`.
+
+* `"ab\c"` is a valid string consisting of the characters `a`, `b`, `c`.
+
+* `"abc` is not a valid string, because it is missing the terminating `"`.
+
+* `"\"` is not a valid string, because it is missing the terminating `"`.
+
+* `"ab"c"` is the valid string `"ab"` followed by the identifier `c` and an
+unmatched double quote character.
+
+==== Multiline String Literals
+
+A *multiline string literal* is a sequence of *multiline literal characters* enclosed 
+in sequences `"""` of three double quote characters.
+A multiline literal character is one of the following:
+
+* Any character other than `"` or `\`.
+
+* `\` followed by any character.
+
+Before trimming whitespace,
+the characters of the interpreted string correspond one-to-one
+to the literal characters of the string, in the same order,
+according to the following rule:
+if the literal character is _c_ or `\` _c_, then the corresponding character
+of the interpreted string is _c_.
+
+Whitespace inside a multiline string literal is trimmed as follows:
+
+. The first extended newline character, if any, after the first `"""` is 
+deleted from the interpreted string.
+
+. Any whitespace occurring in columns to the left of the first `"""`
+is deleted from the result of step 1.
+
+. Any leading and trailing extended newline characters are deleted from the
+result of step 2.
+
+*Example 1*
+
+[source,fpp]
+----
+constant s = """\"\"\""""
+----
+
+The string literal uses escaped quotation marks.
+The value of the string constant `s` is `"""`.
+
+*Example 2*
+
+[source,fpp]
+----
+  """
+  // This is a multiline string literal
+  // It represents some C++ code
+  instance.create(0, 1);
+  """
+----
+
+The interpreted string consists of the following lines, each terminated by a newline:
+
+. `// This is a multiline string literal`
+. `// It represents some C++ code`
+. `instance.create(0, 1);`
+

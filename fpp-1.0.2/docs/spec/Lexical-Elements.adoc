@@ -1,0 +1,342 @@
+== Lexical Elements
+
+Before parsing an FPP model, the compiler converts the source
+text into a list of **tokens**.
+This process is called **lexing**.
+
+A token is one of the following:
+
+* A <<Lexical-Elements_Reserved-Words,reserved word>>.
+
+* A <<Lexical-Elements_Symbols,symbol>>.
+
+* An <<Lexical-Elements_Identifiers,identifier>>.
+
+* An <<Expressions_Integer-Literals,integer literal>>.
+
+* A <<Expressions_Floating-Point-Literals,floating-point literal>>.
+
+* A <<Expressions_String-Literals,string literal>>.
+
+* An <<Lexical-Elements_End-of-Line-Tokens,end-of-line token>>.
+
+* A line of an <<Comments-and-Annotations_Annotations,annotation>>
+beginning with `@` or `@<`.
+
+=== Reserved Words
+
+The following are reserved words in FPP.
+They may not be used as identifiers, except
+when preceded by the `$` character, as discussed below.
+
+[source,fpp]
+----
+F32
+F64
+I16
+I32
+I64
+I8
+U16
+U32
+U64
+U8
+active
+activity
+always
+array
+assert
+async
+at
+base
+block
+bool
+change
+command
+component
+connections
+constant
+cpu
+default
+diagnostic
+drop
+enum
+event
+false
+fatal
+format
+get
+guarded
+health
+high
+id
+import
+include
+input
+instance
+internal
+locate
+low
+match
+module
+on
+opcode
+orange
+output
+param
+passive
+phase
+port
+priority
+private
+queue
+queued
+recv
+red
+ref
+reg
+resp
+save
+serial
+set
+severity
+size
+stack
+string
+struct
+sync
+telemetry
+text
+throttle
+time
+topology
+true
+type
+update
+warning
+with
+yellow
+----
+
+=== Symbols
+
+The following sequences of characters are symbol tokens in FPP:
+
+[source,fpp]
+----
+(
+)
+*
++
+,
+-
+->
+.
+/
+:
+;
+=
+[
+]
+{
+}
+----
+
+=== Identifiers
+
+*Definition:* An *identifier* is an unqualified name
+consisting of one or more characters. The first character
+must be a letter or an underscore. Characters after the first character
+may be letters, digits, and underscores.
+
+For example:
+
+* `identifier`, `identifier3`, and `__identifier3` are valid identifiers.
+
+* `3identifier` is not a valid identifier, because it starts with a digit.
+
+* `identifier%` is not a valid identifier, because it contains the character `%`.
+
+*Escaped keywords:* Any identifier may be preceded by the character `$`, with 
+no intervening space.
+An identifier `$` _I_ has the same meaning as _I_, except that if _I_ is a
+<<Lexical-Elements_Reserved-Words,reserved word>>, then _I_ is scanned
+as an identifier and not as a reserved word.
+
+For example:
+
+* `$identifier` is a valid identifier.  It has the same meaning as `identifier`.
+
+* `$time` is a valid identifier. It represents the character sequence `time`
+treated as an identifier and not as a reserved word.
+
+* `time` is a reserved word. It may not be used as an identifier.
+
+=== End-of-Line Tokens
+
+An *end-of-line token* is a sequence of one or more *newlines*.
+A newline (or line break) is the NL character (ASCII code 0x0A),
+optionally preceded by a CR 
+character (ASCII code 0x0D). End-of-line tokens separate the elements of 
+<<Element-Sequences,element sequences>>.
+
+=== Comments
+
+The lexer ignores <<Comments-and-Annotations_Comments,comments>>.
+Specifically:
+
+* A comment followed by a <<Lexical-Elements_End-of-Line-Tokens,newline>> is treated as 
+a newline.
+
+* A comment at the end of a file, not followed by a newline, is 
+treated as no text.
+
+=== Whitespace and Non-Printable Characters
+
+Apart from <<Lexical-Elements_End-of-Line-Tokens,end-of-line tokens>>, the 
+lexer treats whitespace as follows:
+
+* Space characters are ignored, except to separate tokens.
+
+* No other whitespace or non-printable characters are allowed
+outside of a string, comment, or annotation.
+In particular, the tab character may not appear
+in an FPP model outside of a string, comment, or annotation.
+
+=== Explicit Line Continuations
+
+The character `\`, when appearing before a 
+<<Lexical-Elements_End-of-Line-Tokens,newline>>, 
+suppresses the newline.
+Both the `\` and the following newline are ignored, and no
+<<Lexical-Elements_End-of-Line-Tokens,end-of-line token>>, 
+is created.
+For example, this
+
+[source,fpp]
+----
+constant a \
+  = 1
+----
+is equivalent to this:
+
+[source,fpp]
+----
+constant a = 1
+----
+
+Note that `\` is required in this case.
+For example, the following is not syntactically correct:
+
+[source,fpp]
+----
+constant a # Error
+  = 1
+----
+
+The newline indicates the end of an element sequence, but
+`constant a` is not a valid element sequence.
+
+=== Automatic Suppression of Newlines
+
+The following symbols consume sequences of newlines that
+follow them, without creating an
+<<Lexical-Elements_End-of-Line-Tokens,end-of-line token>>:
+
+[source,fpp]
+----
+(
+*
++
+,
+-
+->
+/
+:
+;
+=
+[
+{
+----
+
+For example, the following code is legal:
+
+[source,fpp]
+----
+module M {
+  constant a = 0
+}
+----
+
+It is equivalent to this code:
+
+[source,fpp]
+----
+module M { constant a = 0 }
+----
+
+The newline after the `{` symbol is consumed by the symbol.
+The newline after the constant definition is consumed
+by the element sequence member.
+
+The following code is also legal, because the newline is
+consumed by the `=` symbol:
+
+[source,fpp]
+----
+constant a =
+  0
+----
+
+Similarly, the following code is legal, because the newline
+is consumed by the `+` symbol:
+
+[source,fpp]
+----
+constant a = 1 + 
+  2
+----
+
+=== Collapsing of Newlines
+
+To simplify parsing, the lexer may collapse a sequence of one or more
+<<Lexical-Elements_End-of-Line-Tokens,end-of-line tokens>>
+into a single token, or into no token, if
+the operation does not change the meaning of the result according
+to the parse rules.
+For example, the lexer may treat this code
+
+[source,fpp]
+----
+constant a = [
+  1
+  2
+  3
+
+]
+----
+
+as if it were this
+
+[source,fpp]
+----
+constant a = [
+  1
+  2
+  3 
+]
+----
+
+or this
+
+[source,fpp]
+----
+constant a = [
+  1
+  2
+  3 ]
+----
+
+According to the rules for
+<<Element-Sequences,parsing element sequences>>,
+all three code sections are equivalent.

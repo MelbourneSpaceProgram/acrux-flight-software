@@ -1,0 +1,18 @@
+#!/bin/sh -e
+
+export COMPILER_ROOT=$PWD/../../../..
+
+skip_cpp_names="
+Commands
+Events
+Parameters
+Telemetry
+"
+
+for name in $skip_cpp_names
+do
+  export SKIP_CPP_FOR_$name'Component'=1
+done
+
+export FPRIME_GCC_FLAGS="-Wno-zero-length-array -Wno-vla-extension -Wno-sign-conversion"
+sh ../scripts/check-xml.sh

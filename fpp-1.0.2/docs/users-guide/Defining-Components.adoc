@@ -1,0 +1,2301 @@
+== Defining Components
+
+In F Prime, the *component* is the basic unit of FSW function.
+An F Prime component is similar to a class in an object-oriented language.
+An F Prime FSW application is divided into several
+*component instances*, each of which instantiates a component.
+The component instances communicate by sending and receiving
+invocations on their
+<<Defining-Ports, ports>>.
+
+In F Prime, there are three kinds of components:
+active, queued, and passive.
+An active component has a thread of control
+and a message queue.
+A queued component has a message queue, but no thread
+of control; control runs on another thread, such as
+a rate group thread.
+A passive component has no thread of control and no
+message queue; it is like a non-threaded function library.
+
+=== Component Definitions
+
+An FPP *component definition* defines an F Prime component.
+To write a component definition, you write the following:
+
+* The component kind: one of `active`, `passive`,
+or `queued`.
+* The keyword `component`.
+* The <<Defining-Constants_Names,name>> of the component.
+* A sequence of *component members* enclosed in curly braces
+`{` ... `}`.
+
+As an example, here is a passive component `C` with no members:
+
+[source,fpp]
+----
+@ An empty passive component
+passive component C {
+
+}
+----
+
+A component definition and each of its members is an
+<<Writing-Comments-and-Annotations_Annotations,annotatable element>>.
+For example, you can annotate the component as shown above.
+The members of a component form an
+<<Defining-Constants_Multiple-Definitions-and-Element-Sequences,
+element sequence>> with a semicolon as the optional
+terminating punctuation.
+The following sections describe the available component members.
+
+=== Port Instances
+
+A *port instance* is a component member that specifies an instance of an FPP
+<<Defining-Ports, port>> used by the instances of the component.
+Component instances use their port instances to communicate
+with other component instances.
+
+A port instance instantiates a port.
+The port definition provides information common to all uses of the port, such as
+the kind of data carried on the port.
+The port instance provides use-specific information, such
+as the name of the instance and the the direction of invocation
+(input or output).
+
+==== Basic Port Instances
+
+The simplest port instance specifies a kind, a name, and a type.
+The kind is one of the following:
+
+* `async` `input`: Input to this component that arrives on a message queue, to
+be dispatched on this component's thread (if this component is active)
+or on the thread of another port invocation (if this component is queued).
+
+* `sync` `input`: Input that invokes a handler defined in this component,
+and run on the thread of the caller.
+
+* `guarded` `input`: Similar to sync input, but the handler is
+guarded by a mutual exclusion lock.
+
+* `output`: Output transmitted by this component.
+
+The name is the name of the port instance.
+The type refers to a <<Defining-Ports,port definition>>.
+
+As an example, here is a passive component `F32Adder` that
+adds two `F32` values and produces an `F32` value.
+
+[source,fpp]
+----
+@ A port for carrying an F32 value
+port F32Value(value: F32)
+
+@ A passive component for adding two F32 values
+passive component F32Adder {
+
+  @ Input 1
+  sync input port f32ValueIn1: F32Value
+
+  @ Input 2
+  sync input port f32ValueIn2: F32Value
+
+  @ Output
+  output port f32ValueOut: F32Value
+
+}
+----
+
+There are two sync input port instances and one output port
+instance.
+The kind appears first, followed by the keyword `port`, the port instance
+name, a colon, and the type.
+Each port instance is an
+<<Writing-Comments-and-Annotations_Annotations,annotatable element>>,
+so you can annotate the instances as shown.
+
+As another example, here is an active version of `F32Adder`
+with `async` input ports:
+
+[source,fpp]
+----
+@ A port for carrying an F32 value
+port F32Value(value: F32)
+
+@ An active component for adding two F32 values
+active component ActiveF32Adder {
+
+  @ Input 1
+  async input port f32ValueIn1: F32Value
+
+  @ Input 2
+  async input port f32ValueIn2: F32Value
+
+  @ Output
+  output port f32ValueOut: F32Value
+
+}
+----
+
+In each case, the adding is done in the target language.
+For example, in the {cpp} implementation, you would generate a
+base class with a virtual handler function, and then override that virtual
+function in a derived class that you write.
+For further details about implementing F Prime components, see the
+F Prime User's Guide.
+
+*Note on terminology:* As explained above, there is a technical
+distinction between a _port_ (defined outside any component, and providing
+the type of a port instance)
+and a _port instance_ (defined inside a component and instantiating
+a port type).
+However, it is sometimes useful to refer to a port instance with
+the shorter term "port" when there is no danger of confusion.
+We will do that in this manual.
+For example, we will say that the `F32Adder` component has three
+ports: two async input ports of type `F32Value` and one output port
+of type `F32Value`.
+
+==== Rules for Port Instances
+
+The port instances appearing in a component definition must
+satisfy certain rules.
+These rules ensure that the FPP model makes sense.
+
+First, no passive component may have an `async` `input`
+port.
+This is because a passive component has no message queue,
+so asynchronous input is not possible.
+As an example, if we modify the input ports of our `F32Adder`
+to make them `async`, we get an error.
+
+[source,fpp]
+--------
+port F32Value(value: F32)
+
+# Error: Passive component may not have async input
+passive component ErroneousF32Adder {
+
+  async input port f32ValueIn1: F32Value
+
+  async input port f32ValueIn2: F32Value
+
+  output port f32ValueOut: F32Value
+
+}
+--------
+
+Try presenting this code to `fpp-check` and observe what happens.
+
+Second, an active or queued component _must_ have asynchronous input.
+That means it must have at least one async input port;
+or it must have an internal port (described below);
+or it must have at least one async command (also described below).
+As an example, if we modify the input ports of our `ActiveF32Adder`
+to make them `sync`, we get an error, because
+there is no async input.
+
+[source,fpp]
+--------
+port F32Value(value: F32)
+
+# Error: Active component must have async input
+active component ErroneousActiveF32Adder {
+
+  sync input port f32ValueIn1: F32Value
+
+  sync input port f32ValueIn2: F32Value
+
+  output port f32ValueOut: F32Value
+
+}
+--------
+
+Third, a port type appearing in an `async` `input` port
+may not have a return type.
+This is because returning a value
+makes sense only for synchronous input.
+As an example, this component definition is illegal:
+
+[source,fpp]
+--------
+port P -> U32
+
+active component Error {
+
+  # Error: port instance p: P is async input and
+  # port P has a return type
+  async input port p: P
+
+}
+--------
+
+==== Arrays of Port Instances
+
+When you specify a port instance as part of an FPP component, you
+are actually specifying an _array_ of port instances.
+Each instance has a *port number*, where the port numbers start at zero
+and go up by one at each successive element.
+(Another way to say this is that the port numbers are the array indices,
+and the indices start at zero.)
+
+If you don't specify a size for the array, as shown in
+the previous sections, then the array has size one, and there is a single port
+instance with port number zero.
+Thus a port instance specifier with no array size acts like a singleton
+element.
+Alternatively, you can specify an explicit array size.
+You do that by writing an <<Defining-Constants_Expressions,expression>>
+enclosed in square brackets `[` ... `]` denoting the size (number of elements)
+of the array.
+The size expression must evaluate to a numeric value.
+As with
+<<Defining-Types_Array-Type-Definitions_Writing-an-Array-Type-Definition,
+array type definitions>>,
+the size goes before the element type.
+As an example, here is another version of the `F32Adder` component, this time
+using a single array of two input ports instead of two named ports.
+
+[source,fpp]
+----
+@ A port for carrying an F32 value
+port F32Value(value: F32)
+
+@ A passive component for adding two F32 values
+passive component F32Adder {
+
+  @ Inputs 0 and 1
+  sync input port f32ValueIn: [2] F32Value
+
+  @ Output
+  output port f32ValueOut: F32Value
+
+}
+----
+
+==== Priority
+
+For `async` `input` ports, you may specify a priority.
+The priority specification is not allowed for other kinds of ports.
+To specify a priority, you write the keyword `priority` and an
+expression that evaluates to a numeric value after the port type.
+As an example, here is a modified version of the `ActiveF32Adder`
+with specified priorities:
+
+[source,fpp]
+----
+@ A port for carrying an F32 value
+port F32Value(value: F32)
+
+@ An active component for adding two F32 values
+@ Uses specified priorities
+active component ActiveF32Adder {
+
+  @ Input 1 at priority 10
+  async input port f32ValueIn1: F32Value priority 10
+
+  @ Input 2 at priority 20
+  async input port f32ValueIn2: F32Value priority 20
+
+  @ Output
+  output port f32ValueOut: F32Value
+
+}
+----
+
+If an `async` `input` port has no specified priority, then the
+translator uses a default priority.
+The precise meaning of the default priority and of the numeric priorities is
+implementation-specific.
+In general the priorities regulate the order in which elements are dispatched
+from the message queue.
+
+==== Queue Full Behavior
+
+By default, if an invocation of an `async` `input` port causes
+a message queue to overflow, then a *FSW assertion* fails.
+A FSW assertion is a condition that must be true in order
+for FSW execution to proceed safely.
+The behavior of a FSW assertion failure is configurable in the {cpp}
+implementation of the F Prime framework; typically it causes a FSW
+abort and system reset.
+
+Optionally, you can specify the behavior when a message
+received on an `async` `input` port causes a queue overflow.
+There are three possible behaviors:
+
+. `assert`: Fail a FSW assertion (the default behavior).
+. `block`: Block the sender until the queue is available.
+. `drop`: Drop the incoming message and proceed.
+
+To specify queue full behavior, you write one of the keywords `assert`,
+`block`, or `drop` after the port type and after the priority
+(if any).
+As an example, here is the `ActiveF32Adder` updated with explicit
+queue full behavior.
+
+[source,fpp]
+----
+@ A port for carrying an F32 value
+port F32Value(value: F32)
+
+@ An active component for adding two F32 values
+@ Uses specified priorities
+active component ActiveF32Adder {
+
+  @ Input 1 at priority 10: Block on queue full
+  async input port f32ValueIn1: F32Value priority 10 block
+
+  @ Input 2: Drop on queue full
+  async input port f32ValueIn2: F32Value drop
+
+  @ Output
+  output port f32ValueOut: F32Value
+
+}
+----
+
+As for priority specifiers, queue full specifiers are allowed only
+for `async` `input` ports.
+
+==== Serial Port Instances
+
+When writing a port instance, instead of specifying a named port type,
+you may write the keyword `serial`.
+Doing this specifies a *serial port instance*.
+A serial port instance does not specify the type of data that it carries.
+It may be connected to a port of any type.
+Serial data passes through the port; the data may be converted to or from a
+specific type at the other end of the connection.
+
+As an example, here is a passive component for taking a stream
+of serial data and splitting it (i.e., repeating it by copy)
+onto several streams:
+
+[source,fpp]
+----
+@ Split factor
+constant splitFactor = 10
+
+@ Component for splitting a serial data stream
+passive component SerialSplitter {
+
+  @ Input
+  sync input port serialIn: serial
+
+  @ Output
+  output port serialOut: [splitFactor] serial
+
+}
+----
+
+By using serial ports, you can send several unrelated types
+of data over the same port connection.
+This technique is useful when communicating across
+a network: on each side of the network connection, a single component
+can act as a hub that routs all data to and from components
+on that side.
+This flexibility comes at the cost that you lose the type
+compile-time type checking provided by port connections with named types.
+For more information about serial ports and their use, see
+the F Prime User's Guide.
+
+=== Special Port Instances
+
+A *special port instance* is a port instance that has a special
+behavior in F Prime.
+As discussed <<Defining-Components_Port-Instances,above>>,
+when writing a general port instance,
+you specify a port kind, a port type, and possibly other
+information such as array size and priority.
+Writing a special port instance is a bit different.
+In this case you specify a predefined behavior
+provided by the F Prime framework.
+The special port behaviors fall into five groups:
+commands, events, telemetry, parameters, and time.
+
+==== Command Ports
+
+A *command* is an instruction to the spacecraft to perform an action.
+The special command behaviors, and their keywords, are as follows:
+
+* `command` `recv`: A port for receiving commands.
+* `command` `reg`: A port for sending command registration requests.
+* `command` `resp`: A port for sending command responses.
+
+Collectively, these ports are known as *command ports*.
+To specify a command port, you write one of the keyword pairs
+shown above followed by the keyword `port` and the port name.
+
+As an example, here is a passive component `CommandPorts` with each
+of the command ports:
+
+[source,fpp]
+----
+@ A component for illustrating command ports
+passive component CommandPorts {
+
+  @ A port for receiving commands
+  command recv port cmdIn
+
+  @ A port for sending command registration requests
+  command reg port cmdRegOut
+
+  @ A port for sending command responses
+  command resp port cmdResponseOut
+
+}
+----
+
+Any component may have at most one of each kind of command
+port.
+If a component receives commands (more on this below),
+then all three ports are required.
+The port names shown in the example above are standard but not
+required; you can use any names you wish.
+
+During translation, each command port is converted into
+a typed port instance with a predefined port type, as follows:
+
+* `command` `recv` uses the port `Fw.Cmd`
+* `command` `reg` uses the port `Fw.CmdReg`
+* `command` `resp` uses the port `Fw.CmdResponse`
+
+The F Prime framework provides definitions for these ports
+in the directory `Fw/Cmd`.
+For checking simple examples, you can use the following
+simplified definitions of these ports:
+
+[source,fpp]
+--------
+module Fw {
+  port Cmd
+  port CmdReg
+  port CmdResponse
+}
+--------
+
+For example, to check the `CommandPorts` component, you can
+add these lines before the component definition.
+If you don't do this, or something similar, then the component
+definition won't pass through `fpp-check` because of the missing ports.
+(Try it and see.)
+
+Note that the port definitions shown above are for conveniently checking
+simple examples only.
+They are not correct for the F Prime framework and will not work
+properly with F Prime {cpp} code generation.
+
+For further information about command registration, receipt, and
+response, and implementing command handlers, see the
+F Prime User's Guide.
+
+==== Event Ports
+
+An *event* is a report that something happened, for example,
+that a file was successfully uplinked.
+The special event behaviors, and their keywords, are as follows:
+
+* `event`: A port for emitting events as serialized bytes.
+* `text` `event`: A port for emitting events as human-readable
+text (usually used for testing and debugging on the ground).
+
+Collectively, these ports are known as *event ports*.
+To specify an event port, you write one of the keyword groups
+shown above followed by the keyword `port` and the port name.
+
+As an example, here is a passive component `EventPorts` with each
+of the event ports:
+
+[source,fpp]
+----
+@ A component for illustrating event ports
+passive component EventPorts {
+
+  @ A port for emitting events
+  event port eventOut
+
+  @ A port for emitting text events
+  text event port textEventOut
+
+}
+----
+
+Any component may have at most one of each kind of event
+port.
+If a component emits events (more on this below),
+then both event ports are required.
+
+During translation, each event port is converted into
+a typed port instance with a predefined port type, as follows:
+
+* `event` uses the port `Fw.Log`
+* `text` `event` uses the port `Fw.LogText`
+
+The name `Log` refers to an event log.
+The F Prime framework provides definitions for these ports
+in the directory `Fw/Log`.
+For checking simple examples, you can use the following
+simplified definitions of these ports:
+
+[source,fpp]
+--------
+module Fw {
+  port Log
+  port LogText
+}
+--------
+
+For further information about events in F Prime, see the
+F Prime User's Guide.
+
+==== Telemetry Ports
+
+*Telemetry* is data regarding the state of the system.
+A *telemetry port* allows a component to emit telemetry.
+To specify a telemetry port, you write the keyword `telemetry`,
+the keyword `port`, and the port name.
+
+As an example, here is a passive component `TelemetryPorts` with
+a telemetry port:
+
+[source,fpp]
+----
+@ A component for illustrating telemetry ports
+passive component TelemetryPorts {
+
+  @ A port for emitting telemetry
+  telemetry port tlmOut
+
+}
+----
+
+Any component may have at most one telemetry port.
+If a component emits telemetry (more on this below),
+then a telemetry port is required.
+
+During translation, each telemetry port is converted into
+a typed port instance with the predefined port type
+`Fw.Tlm`.
+The F Prime framework provides a definition for this port
+in the directory `Fw/Tlm`.
+For checking simple examples, you can use the following
+simplified definition of this port:
+
+[source,fpp]
+--------
+module Fw {
+  port Tlm
+}
+--------
+
+For further information about telemetry in F Prime, see the
+F Prime User's Guide.
+
+==== Parameter Ports
+
+A *parameter* is a configurable constant that may be updated
+from the ground.
+The current parameter values are stored in an F Prime component
+called the *parameter database*.
+
+The special parameter behaviors, and their keywords, are as follows:
+
+* `param` `get`: A port for getting the current value of a parameter
+from the parameter database.
+* `param` `set`: A port for setting the current value of a parameter
+in the parameter database.
+
+Collectively, these ports are known as *parameter ports*.
+To specify a parameter port, you write one of the keyword groups
+shown above followed by the keyword `port` and the port name.
+
+As an example, here is a passive component `ParamPorts` with each
+of the parameter ports:
+
+[source,fpp]
+----
+@ A component for illustrating parameter ports
+passive component ParamPorts {
+
+  @ A port for getting parameter values
+  param get port prmGetOut
+
+  @ A port for setting parameter values
+  param set port prmSetOut
+
+}
+----
+
+Any component may have at most one of each kind of parameter
+port.
+If a component has parameters (more on this below),
+then both parameter ports are required.
+
+During translation, each parameter port is converted into
+a typed port instance with a predefined port type, as follows:
+
+* `param` `get` uses the port `Fw.PrmGet`
+* `param` `set` uses the port `Fw.PrmSet`
+
+The F Prime framework provides definitions for these ports
+in the directory `Fw/Prm`.
+For checking simple examples, you can use the following
+simplified definitions of these ports:
+
+[source,fpp]
+--------
+module Fw {
+  port PrmGet
+  port PrmSet
+}
+--------
+
+For further information about parameters in F Prime, see the
+F Prime User's Guide.
+
+
+==== Time Get Ports
+
+A *time get port* allows a component to get the system time from a
+time component.
+To specify a time get port, you write the keywords `time` `get`,
+the keyword `port`, and the port name.
+
+As an example, here is a passive component `TimeGetPorts` with
+a time get port:
+
+[source,fpp]
+----
+@ A component for illustrating time get ports
+passive component TimeGetPorts {
+
+  @ A port for getting the time
+  time get port timeGetOut
+
+}
+----
+
+Any component may have at most one time get port.
+If a component emits events or telemetry (more on this below),
+then a time get port is required, so that the events
+and telemetry points can be time stamped.
+
+During translation, each time get port is converted into
+a typed port instance with the predefined port type
+`Fw.Time`.
+The F Prime framework provides a definition for this port
+in the directory `Fw/Time`.
+For checking simple examples, you can use the following
+simplified definition of this port:
+
+[source,fpp]
+--------
+module Fw {
+  port Time
+}
+--------
+
+For further information about time in F Prime, see the
+F Prime User's Guide.
+
+=== Internal Ports
+
+An *internal port* is a port that a component can use to send a
+message to itself.
+In the ordinary case, when a component sends a message, it invokes an
+output port that is connected to an async input port.
+When the output port and input port reside in the same component,
+it is simpler to use an internal port.
+
+As an example, suppose we have a component
+that needs to send a message to itself.
+We could construct such a component in the following way:
+
+[source,fpp]
+----
+@ A data type T
+type T
+
+@ A port for sending data of type T
+port P(t: T)
+
+@ A component that sends data to itself on an async input port
+active component ExternalSelfMessage {
+
+  @ A port for sending data of type T
+  async input port pIn: P
+
+  @ A port for receiving data of type T
+  output port pOut: P
+
+}
+----
+
+This works, but if the only user of `pIn` is
+`ExternalSelfMessage`, it is cumbersome.
+We need to declare two ports and connect them.
+Instead, we can use an internal port, like this:
+
+[source,fpp]
+----
+@ A data type T
+type T
+
+@ A component that sends data to itself on an internal port
+active component InternalSelfMessage {
+
+  @ An internal port for sending data of type T
+  internal port pInternal(t: T)
+
+}
+----
+
+When the implementation of `ExternalSelfMessage` invokes
+the port `pInternal`, a message goes on its queue.
+This corresponds to the behavior of `pOut` in
+`ExternalSelfMessage`.
+Later, when the framework dispatches the message, it
+calls a handler function associated with the port.
+This corresponds to the behavior of `pIn` in
+`ExternalSelfMessage`.
+So an internal port is like two ports (an output port
+and an async input port) fused into one.
+
+When writing an internal port, you do not use a named
+port definition.
+Instead, you provide the formal parameters directly.
+Notice that when defining `ExternalSelfMessage` we
+defined and used the port `P`, but when defining
+`InternalSelfMessage` we did not.
+The formal parameters of an internal port work in the same way
+as for a <<Defining-Ports_Formal-Parameters,port definition>>,
+except that none of the parameters may be a
+<<Defining-Ports_Reference-Parameters,reference parameter>>.
+
+When specifying an internal port, you may specify
+<<Defining-Components_Port-Instances_Priority,priority>> and
+<<Defining-Components_Port-Instances_Queue-Full-Behavior,queue full behavior>>
+as for an async input port.
+For example, we can add priority and queue full behavior
+to `pInternal` as follows:
+
+[source,fpp]
+----
+@ A data type T
+type T
+
+@ A component that sends data to itself on an internal port,
+@ with priority and queue full behavior
+active component InternalSelfMessage {
+
+  @ An internal port for sending data of type T
+  internal port pInternal(t: T) priority 10 drop
+
+}
+----
+
+Internal ports generate async input, so they make sense
+only for `active` and `queued` components.
+As an example, consider the following component
+definition:
+
+[source,fpp]
+--------
+type T
+
+passive component PassiveInternalPort {
+
+  # Internal ports don't make sense for passive components
+  internal port pInternal(t: T)
+
+}
+--------
+
+What do you think will happen if you run `fpp-check`
+on this code?
+Try it and see.
+
+=== Commands
+
+When defining an F Prime component, you may specify one or more commands.
+When you are operating the FSW, you use the F Prime Ground Data System
+or another ground data system to send commands to the FSW.
+On receipt of a command _C_, a Command Dispatcher component instance
+dispatches _C_ to the component instance where that command is implemented.
+The command is handled in a {cpp} command handler that you write
+as part of the component implementation.
+
+For complete information about F Prime command dispatch and
+handling, see the F Prime User's Guide.
+Here we concentrate on how to specify commands in FPP.
+
+==== Basic Commands
+
+The simplest command consists of a kind followed by the keyword
+`command` and a name.
+The kind is one of the following:
+
+* `async`: The command arrives on a message queue, to
+be dispatched on this component's thread (if this component is active)
+or on the thread of a port invocation (if this component is queued).
+
+* `sync`: The command invokes a handler defined in this component,
+and run on the thread of the caller.
+
+* `guarded`: Similar to sync input, but the handler is
+guarded by a mutual exclusion lock.
+
+Notice that the kinds of commands are similar to the kinds of
+<<Defining-Components_Port-Instances_Basic-Port-Instances,
+input ports>>.
+The name is the name of the command.
+
+As an example, here is an active component called `Action`
+with two commands: an async command `START` and a sync
+command `STOP`.
+
+[source,fpp]
+----
+@ An active component for performing an action
+active component Action {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command registration
+  command reg port cmdRegOut
+
+  @ Command input
+  command recv port cmdIn
+
+  @ Command response
+  command resp port cmdResponseOut
+
+  # ----------------------------------------------------------------------
+  # Commands
+  # ----------------------------------------------------------------------
+
+  @ Start the action
+  async command START
+
+  @ Stop the action
+  sync command STOP
+
+}
+----
+
+Command `START` is declared `async`.
+That means that when a `START` command is dispatched
+to an instance of this component, it arrives on a queue.
+Later, the F Prime framework takes the message off the queue
+and calls the corresponding handler on the thread
+of the component.
+
+Command `STOP` is declared `sync`.
+That means that the command runs immediately on the
+thread of the invoking component (for example,
+a command dispatcher component).
+Because the command runs immediately, its handler
+should be very short.
+For example, it could set a stop flag and then exit.
+
+Notice that we defined the three
+<<Defining-Components_Special-Port-Instances_Command-Ports,
+command ports>>
+for this component.
+All three ports are required for any component that has commands.
+As an example, try deleting one or more of the command ports from the
+code above and running the result through `fpp-check`.
+
+`async` commands require a message queue, so
+they are allowed only for active and queued
+components.
+As an example, try making the `Action` component passive and
+running the result through `fpp-check`.
+
+==== Formal Parameters
+
+When specifying a command, you may specify one or more
+formal parameters.
+The parameters are bound to arguments when the command
+is sent to the spacecraft.
+Different uses of the same command can have different
+argument values.
+
+The formal parameters of a command are the same
+as for a <<Defining-Ports_Formal-Parameters,port definition>>, except
+that none of the parameters may be a
+<<Defining-Ports_Reference-Parameters,reference parameter>>.
+As an example, here is a `Switch` component that has
+two states, `ON` and `OFF`.
+The component has a `SET_STATE` command for
+setting the state.
+The command has a single argument `state`
+that specifies the new state.
+
+[source,fpp]
+----
+@ The state enumeration
+enum State {
+  OFF @< The off state
+  ON @< The on state
+}
+
+@ A switch with on and off state
+active component Switch {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command registration
+  command reg port cmdRegOut
+
+  @ Command input
+  command recv port cmdIn
+
+  @ Command response
+  command resp port cmdResponseOut
+
+  # ----------------------------------------------------------------------
+  # Commands
+  # ----------------------------------------------------------------------
+
+  @ Set the state
+  async command SET_STATE(
+    state: State @< The new state
+  )
+
+}
+----
+
+*GDS limitation:* The F Prime GDS does not currently support the
+use of <<Defining-Types_Array-Type-Definitions, array types>> or
+<<Defining-Types_Struct-Type-Definitions, struct types>> in the formal parameters
+of commands.
+
+==== Opcodes
+
+Every command in an F Prime FSW application has an *opcode*.
+The opcode is a number that uniquely identifies the command.
+The F Prime framework uses the opcode when dispatching commands
+because it is a more compact identifier than the name.
+The name is mainly for human interaction on the ground.
+
+The opcodes associated with each component _C_
+are relative to the component.
+Typically the opcodes start at zero: that is, the
+opcodes are 0, 1, 2, etc.
+When constructing an instance _I_ of component _C_,
+the framework adds a base opcode for _I_ to each relative opcode
+associated with _C_ to form
+the global opcodes associated with _I_.
+That way different instances of _C_ can have different opcodes
+for the same commands defined in _C_.
+We will have more to say about base and relative opcodes
+when we describe component instances and topologies.
+
+If you specify a command _c_ with no explicit opcode, as in the examples
+shown in the previous sections, then FPP assigns a default opcode
+to _c_.
+The default opcode for the first command in a component is zero.
+Otherwise the default opcode for any command is one more than
+the opcode of the previous command.
+
+It is usually convenient to rely on the default opcodes.
+However, you may wish to specify one or more opcodes explicitly.
+To do this, you write the keyword `opcode` followed
+by a numeric expression after the command name and after the
+formal parameters, if any.
+Here is an example:
+
+[source,fpp]
+----
+@ Component for illustrating command opcodes
+active component CommandOpcodes {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command registration
+  command reg port cmdRegOut
+
+  @ Command input
+  command recv port cmdIn
+
+  @ Command response
+  command resp port cmdResponseOut
+
+  # ----------------------------------------------------------------------
+  # Commands
+  # ----------------------------------------------------------------------
+
+  @ This command has default opcode 0x0
+  async command COMMAND_1
+
+  @ This command has explicit opcode 0x10
+  async command COMMAND_2(a: F32, b: U32) opcode 0x10
+
+  @ This command has default opcode 0x11
+  sync command COMMAND_3
+
+}
+----
+
+Within a component, the command opcodes must be unique.
+For example, this component is incorrect because
+the opcode zero appears twice:
+
+[source,fpp]
+--------
+@ Component for illustrating a duplicate opcode
+active component DuplicateOpcode {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command registration
+  command reg port cmdRegOut
+
+  @ Command input
+  command recv port cmdIn
+
+  @ Command response
+  command resp port cmdResponseOut
+
+  # ----------------------------------------------------------------------
+  # Commands
+  # ----------------------------------------------------------------------
+
+  @ This command has opcode 0x0
+  async command COMMAND_1
+
+  @ Oops! This command also has opcode 0x0
+  async command COMMAND_2 opcode 0x0
+
+}
+--------
+
+==== Priority and Queue Full Behavior
+
+When specifying an async command, you may specify
+<<Defining-Components_Port-Instances_Priority,priority>> and
+<<Defining-Components_Port-Instances_Queue-Full-Behavior,queue full behavior>>
+as for an async input port.
+You put the priority and queue full information after the command name
+and after the formal parameters and opcode, if any.
+Here is an example:
+
+[source,fpp]
+----
+@ A component for illustrating priority and queue full behavior for async
+@ commands
+active component PriorityQueueFull {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command registration
+  command reg port cmdRegOut
+
+  @ Command input
+  command recv port cmdIn
+
+  @ Command response
+  command resp port cmdResponseOut
+
+  # ----------------------------------------------------------------------
+  # Commands
+  # ----------------------------------------------------------------------
+
+  @ Command with priority
+  async command COMMAND_1 priority 10
+
+  @ Command with formal parameters and priority
+  async command COMMAND_2(a: U32, b: F32) priority 20
+
+  @ Command with formal parameters, opcode, priority, and queue full behavior
+  async command COMMAND_3(a: string) opcode 0x10 priority 30 drop
+
+}
+----
+
+Priority and queue full behavior are allowed only for
+`async` commands.
+Try changing one of the commands in the previous example
+to `sync` and see what `fpp-check` has to say about it.
+
+=== Events
+
+When defining an F Prime component, you may specify one or more events.
+The F Prime framework converts each event into a {cpp}
+function that you can call from the component implementation.
+Calling the function emits a serialized event report that
+you can store in an on-board file system or send to the ground.
+
+For complete information about F Prime event
+handling, see the F Prime User's Guide.
+Here we concentrate on how to specify events in FPP.
+
+==== Basic Events
+
+The simplest event consists of the keyword `event`, a name, a severity,
+and a format string.
+The name is the name of the event.
+A severity is the keyword `severity` and one of the following:
+
+* `activity` `high`: Spacecraft activity of greater importance.
+
+* `activity` `low`: Spacecraft activity of lesser importance.
+
+* `command`: An event related to commanding.
+Primarily used by the command dispatcher.
+
+* `diagnostic`: An event relating to system diagnosis
+and debugging.
+
+* `fatal`: An event that causes the system to abort.
+
+* `warning` `high`: A warning of greater importance.
+
+* `warning` `low`: A warning of lesser importance.
+
+A format is the keyword `format` and a literal string for
+use in a formatted real-time display or event log.
+
+As an example, here is an active component called `BasicEvents`
+with a few basic events.
+
+[source,fpp]
+----
+@ A component for illustrating basic events
+passive component BasicEvents {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Event port
+  event port eventOut
+
+  @ Text event port
+  text event port textEventOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Events
+  # ----------------------------------------------------------------------
+
+  @ Activity low event
+  event Event1 severity activity low format "Event 1 occurred"
+
+  @ Warning low event
+  event Event2 severity warning low format "Event 2 occurred"
+
+  @ Warning high event
+  event Event3 severity warning high format "Event 3 occurred"
+
+}
+----
+
+Notice that we defined the two
+<<Defining-Components_Special-Port-Instances_Event-Ports,
+event ports>>
+and a
+<<Defining-Components_Special-Port-Instances_Time-Get-Ports,
+time get port>>
+for this component.
+All three ports are required for any component that has events.
+As an example, try deleting one or more of these ports from the
+code above and running the result through `fpp-check`.
+
+==== Formal Parameters
+
+When specifying an event, you may specify one or more
+formal parameters.
+The parameters are bound to arguments when the component
+instance emits the event.
+The argument values appear in the formatted text
+that describes the event.
+
+The formal parameters of an event are the same
+as for a <<Defining-Ports_Formal-Parameters,port definition>>, except
+that none of the parameters may be a
+<<Defining-Ports_Reference-Parameters,reference parameter>>.
+For each formal parameter, there must be a corresponding
+replacement field in the format string.
+The replacement fields for event format strings are the same as for
+format strings in
+<<Defining-Types_Array-Type-Definitions_Format-Strings,
+type definitions>>.
+The replacement fields in the format string match the event
+parameters, one for one and in the same order.
+
+As an example, here is a component with two events,
+each of which has formal parameters.
+Notice how the replacement fields in the event format
+strings correspond to the formal parameters.
+
+[source,fpp]
+----
+@ An enumeration of cases
+enum Case { A, B, C }
+
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ A component for illustrating event formal parameters
+passive component EventParameters {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Event port
+  event port eventOut
+
+  @ Text event port
+  text event port textEventOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Events
+  # ----------------------------------------------------------------------
+
+  @ Event 1
+  @ Sample output: "Event 1 occurred with argument 42"
+  event Event1(
+    arg1: U32 @< Argument 1
+  ) \
+    severity activity high \
+    format "Event 1 occurred with argument {}"
+
+  @ Event 2
+  @ Sample output: "Saw value [ 0.001, 0.002, 0.003 ] for case A"
+  event Event2(
+    case: Case @< The case
+    value: F64x3 @< The value
+  ) \
+    severity warning low \
+    format "Saw value {} for case {}"
+
+}
+----
+
+==== Identifiers
+
+Every event in an F Prime FSW application has a unique
+numeric identifier.
+As for
+<<Defining-Components_Commands_Opcodes,command opcodes>>,
+the event identifiers for a component are specified
+relative to the component, usually starting from
+zero and counting up by one.
+If you omit the identifier, then
+FPP assigns a default identifier: zero for the first
+event in the component; otherwise one more than the
+identifier of the previous event.
+
+If you wish, you may explicitly specify one or more event
+identifiers.
+To do this, you write the keyword `id` followed
+by a numeric expression immediately before the keyword `format`.
+Here is an example:
+
+[source,fpp]
+----
+@ Component for illustrating event identifiers
+passive component EventIdentifiers {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Event port
+  event port eventOut
+
+  @ Text event port
+  text event port textEventOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Events
+  # ----------------------------------------------------------------------
+
+  @ Event 1
+  @ Its identifier is 0x00
+  event Event1 severity activity low \
+    id 0x10 \
+    format "Event 1 occurred"
+
+  @ Event 2
+  @ Its identifier is 0x10
+  event Event2(
+    count: U32 @< The count
+  ) \
+    severity activity high \
+    id 0x11 \
+    format "The count is {}"
+
+  @ Event 3
+  @ Its identifier is 0x11
+  event Event3 severity activity high \
+    format "Event 3 occurred"
+
+}
+----
+
+Within a component, the event identifiers must be unique.
+
+==== Throttling
+
+Sometimes it is necessary to throttle events, to ensure that
+they do not flood the system.
+For example, suppose that the FSW requests some resource _R_
+at a rate _r_ of several times per second.
+Suppose further that if _R_ is unavailable, then the FSW
+emits a warning event.
+In this case, we typically do not want the FSW to emit an unbounded number
+of warnings at rate _r_; instead, we want it to emit a single warning
+or a few warnings.
+
+To achieve this behavior, you can write the keyword `throttle` and a
+numeric expression after the format string.
+The expression must evaluate to a constant value _n_.
+After an instance of the component has emitted the event _n_ times, it will
+stop emitting the event.
+Here is an example:
+
+[source,fpp]
+----
+@ Component for illustrating event throttling
+passive component EventThrottling {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Event port
+  event port eventOut
+
+  @ Text event port
+  text event port textEventOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Events
+  # ----------------------------------------------------------------------
+
+  @ Event 1
+  event Event1 severity warning high \
+    format "Event 1 occurred" \
+    throttle 10
+
+}
+----
+
+In this example, event `E` will be throttled after the component
+instance has emitted it ten times.
+
+Once an event is throttled, the component instance will no longer
+emit the event until the throttling is canceled.
+Typically, the canceling happens via a FSW command.
+For details, see the F Prime User's Guide.
+
+=== Telemetry
+
+When defining an F Prime component, you may specify one or more
+*telemetry channels*.
+A telemetry channel consists of a data type and an identifier.
+The F Prime framework converts each telemetry into a {cpp}
+function that you can call from the component implementation.
+Calling the function emits a value on the channel.
+Each emitted value is called a
+*telemetry point*.
+You can store the telemetry points in an on-board file system
+or send them the ground.
+
+For complete information about F Prime telemetry
+handling, see the F Prime User's Guide.
+Here we concentrate on how to specify telemetry channels in FPP.
+
+==== Basic Telemetry
+
+The simplest telemetry channel consists of the keyword `telemetry`,
+a name, and a data type.
+The name is the name of the channel.
+The data type is the type of data carried on the channel.
+
+As an example, here is an active component called `BasicTelemetry`
+with a few basic events.
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ A component for illustrating basic telemetry channels
+passive component BasicTelemetry {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Telemetry port
+  telemetry port tlmOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Telemetry
+  # ----------------------------------------------------------------------
+
+  @ Telemetry channel 1
+  telemetry Channel1: U32
+
+  @ Telemetry channel 2
+  telemetry Channel2: F64
+
+  @ Telemetry channel 3
+  telemetry Channel3: F64x3
+
+}
+----
+
+Notice that we defined a
+<<Defining-Components_Special-Port-Instances_Telemetry-Ports,
+telemetry port>>
+and a
+<<Defining-Components_Special-Port-Instances_Time-Get-Ports,
+time get port>>
+for this component.
+Both ports are required for any component that has telemetry.
+
+==== Identifiers
+
+Every telemetry channel in an F Prime FSW application has a unique
+numeric identifier.
+As for
+<<Defining-Components_Commands_Opcodes,command opcodes>>
+and
+<<Defining-Components_Events_Identifiers,event identifiers>>,
+the telemetry channel identifiers for a component are specified
+relative to the component, usually starting from
+zero and counting up by one.
+If you omit the identifier, then
+FPP assigns a default identifier: zero for the first
+event in the component; otherwise one more than the
+identifier of the previous channel.
+
+If you wish, you may explicitly specify one or more
+telemetry channel identifiers.
+To do this, you write the keyword `id` followed
+by a numeric expression immediately after the data type.
+Here is an example:
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ Component for illustrating telemetry channel identifiers
+passive component TlmIdentifiers {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Telemetry port
+  telemetry port tlmOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Telemetry
+  # ----------------------------------------------------------------------
+
+  @ Telemetry channel 1
+  @ Its implied identifier is 0x00
+  telemetry Channel1: U32
+
+  @ Telemetry channel 2
+  @ Its identifier is 0x10
+  telemetry Channel2: F64 id 0x10
+
+  @ Telemetry channel 3
+  @ Its implied identifier is 0x11
+  telemetry Channel3: F64x3
+
+}
+----
+
+Within a component, the telemetry channel identifiers must be unique.
+
+==== Update Frequency
+
+You can specify how often the telemetry is emitted on a channel _C_.
+There are two possibilities:
+
+* `always`: Emit a telemetry point on _C_
+whenever the component implementation calls the
+auto-generated function _F_ that emits telemetry on _C_.
+
+* `on` `change`: Emit a telemetry point whenever
+(1) the implementation calls _F_ and (2) either (a)
+_F_ has not been called before or
+(b) the last time that _F_ was called, the argument
+to _F_ had a different value.
+
+Emitting telemetry on change can reduce unnecessary
+activity in the system.
+For example, suppose a telemetry channel _C_ counts
+the number of times that some event _E_ occurs
+in a periodic task,
+and suppose that _E_ does not occur on every cycle.
+If you declare channel _C_ `on` `change`, then your implementation
+can call the telemetry emit function for _C_ on every
+cycle, and telemetry will be emitted only when
+_E_ occurs.
+
+To specify an update frequency, you write the keyword `update`
+and one of the frequency selectors shown above.
+The update specifier goes after
+the type name and after the channel identifier, if any.
+If you don't specify an update frequency, then the default
+value is `always`.
+Here is an example:
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ Component for illustrating telemetry channel update specifiers
+passive component TlmUpdate {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Telemetry port
+  telemetry port tlmOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Telemetry
+  # ----------------------------------------------------------------------
+
+  @ Telemetry channel 1
+  @ Always emitted
+  telemetry Channel1: U32
+
+  @ Telemetry channel 2
+  @ Emitted on change
+  telemetry Channel2: F64 id 0x10 update on change
+
+  @ Telemetry channel 3
+  @ Always emitted
+  telemetry Channel3: F64x3 update always
+
+}
+----
+
+==== Format Strings
+
+You may specify how a telemetry channel is formatted in the
+ground display.
+To do this, you write the keyword `format` and a format string
+with one
+<<Defining-Types_Array-Type-Definitions_Format-Strings,
+replacement field>>.
+The replacement field must match the type of the telemetry
+channel.
+The format specifier comes after the type name, after the
+channel identifier, and after the update specifier.
+
+Here is an example:
+
+[source,fpp]
+----
+@ Component for illustrating telemetry channel format specifiers
+passive component TlmFormat {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Telemetry port
+  telemetry port tlmOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Telemetry
+  # ----------------------------------------------------------------------
+
+  @ Telemetry channel 1
+  telemetry Channel1: U32 format "{x}"
+
+  @ Telemetry channel 2
+  telemetry Channel2: F64 id 0x10 \
+    update on change \
+    format "{.3f}"
+
+  @ Telemetry channel 3
+  telemetry Channel3: F64\
+    update always \
+    format "{e}"
+
+}
+----
+
+==== Limits
+
+You may specify *limits*, or bounds, on the expected values
+carried on a telemetry channel.
+There are two kinds of limits: `low` (meaning that the
+values on the channel should stay above the limit) and `high`
+(meaning that the values should stay below the limit).
+Within each kind, there are three levels of severity:
+
+* `yellow`: Crossing the limit is of low concern.
+
+* `orange`: Crossing the limit is of medium concern.
+
+* `red`: Crossing the limit is of high concern.
+
+The F Prime ground data system displays an appropriate warning
+when a telemetry point crosses a limit.
+
+The limit specifiers come after the type name, identifier,
+update specifier, and format string.
+You specify the low limits (if any) first, and then the high limits.
+For the low limits, you write the keyword `low` followed by a
+list of limits in curly braces `{ ... }`.
+For the high limits, you do the same  thing but use the keyword
+`high`.
+Each limit is a severity keyword followed by a numeric expression.
+Here are some examples:
+
+
+[source,fpp]
+----
+@ Component for illustrating telemetry channel limits
+passive component TlmLimits {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Telemetry port
+  telemetry port tlmOut
+
+  @ Time get port
+  time get port timeGetOut
+
+  # ----------------------------------------------------------------------
+  # Telemetry
+  # ----------------------------------------------------------------------
+
+  @ Telemetry channel 1
+  telemetry Channel1: U32 \
+    low { red 0, orange 1, yellow 2 }
+
+  @ Telemetry channel 2
+  telemetry Channel2: F64 id 0x10 \
+    update on change \
+    format "{.3f}" \
+    low { red -3, orange -2, yellow -1 } \
+    high { red 3, orange 2, yellow 1 }
+
+  @ Telemetry channel 3
+  telemetry Channel3: F64 \
+    update always \
+    format "{e}" \
+    high { red 3, orange 2, yellow 1 }
+
+}
+----
+
+Each limit must be a numeric value.
+The type of the telemetry channel must be (1) a numeric
+type; or (2) an array or struct type each of whose members
+has a numeric type; or (3) an array or struct type
+each of whose members satisfies condition (1) or
+condition (2).
+
+*XML limitation:* The F Prime XML representation does
+not allow limits for telemetry channels
+of array or struct type.
+
+=== Parameters
+
+When defining an F Prime component, you may specify one or more
+*parameters*.
+A parameter is a typed constant value that you can update
+by command.
+For example, it could be a configuration constant
+for a hardware device or a software algorithm.
+
+F Prime has special support for parameters, including a parameter
+database component for storing parameters in a non-volatile
+manner (e.g., on a file system).
+For complete information about F Prime parameters, see the F Prime User's
+Guide.
+Here we concentrate on how to specify parameters in FPP.
+
+==== Basic Parameters
+
+The simplest parameter consists of the keyword `param`,
+a name, and a data type.
+The name is the name of the parameter.
+The data type is the type of data stored in the parameter.
+
+As an example, here is an active component called `BasicParams`
+with a few basic parameters.
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ A component for illustrating basic parameters
+passive component BasicParams {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command receive port
+  command recv port cmdIn
+
+  @ Command registration port
+  command reg port cmdRegOut
+
+  @ Command response port
+  command resp port cmdResponseOut
+
+  @ Parameter get port
+  param get port prmGetOut
+
+  @ Parameter set port
+  param set port prmSetOut
+
+  # ----------------------------------------------------------------------
+  # Parameters
+  # ----------------------------------------------------------------------
+
+  @ Parameter 1
+  param Param1: U32
+
+  @ Parameter 2
+  param Param2: F64
+
+  @ Parameter 3
+  param Param3: F64x3
+
+}
+----
+
+Notice that we defined the two
+<<Defining-Components_Special-Port-Instances_Parameter-Ports,
+parameter ports>>
+for this component.
+Both ports are required for any component that has parameters.
+
+Notice also that we defined the
+<<Defining-Components_Special-Port-Instances_Command-Ports,
+command ports>>
+for this component.
+When you add one or more parameters to a component,
+F Prime automatically generates commands for (1)
+setting the local parameter in the component and (2) saving
+the local parameter to a system-wide parameter database.
+Therefore, any component that has parameters must have
+the command ports.
+Try deleting one or more of the command ports from the example
+above and see what `fpp-check` does.
+
+*GDS limitation:* The F Prime GDS does not currently support the
+use of <<Defining-Types_Array-Type-Definitions, array types>> or
+<<Defining-Types_Struct-Type-Definitions, struct types>> as the
+types of parameters.
+In particular, parameter `Param3` in the example above will
+not work with the F Prime GDS.
+
+==== Default Values
+
+You can specify a default value for any parameter.
+This is the value that F Prime will use if no value is
+available in the parameter database.
+If you don't specify a default value, and no value is
+available in the database, then attempting to get
+the parameter produces an invalid value.
+What happens then is up to the FSW implementation.
+By providing default values for your parameters,
+you can avoid handling this case.
+
+Here is the example from the previous section, updated
+to include default values for the parameters:
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ A component for illustrating default parameter values
+passive component ParamDefaults {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command receive port
+  command recv port cmdIn
+
+  @ Command registration port
+  command reg port cmdRegOut
+
+  @ Command response port
+  command resp port cmdResponseOut
+
+  @ Parameter get port
+  param get port prmGetOut
+
+  @ Parameter set port
+  param set port prmSetOut
+
+  # ----------------------------------------------------------------------
+  # Parameters
+  # ----------------------------------------------------------------------
+
+  @ Parameter 1
+  param Param1: U32 default 1
+
+  @ Parameter 2
+  param Param2: F64 default 2.0
+
+  @ Parameter 3
+  param Param3: F64x3 default [ 1.0, 2.0, 3.0 ]
+
+}
+----
+
+==== Identifiers
+
+Every parameter in an F Prime FSW application has a unique
+numeric identifier.
+As for
+<<Defining-Components_Commands_Opcodes,command opcodes>>,
+<<Defining-Components_Events_Identifiers,event identifiers>>,
+and
+<<Defining-Components_Telemetry_Identifiers,
+telemetry channel identifiers>>,
+the parameter identifiers for a component are specified
+relative to the component, usually starting from
+zero and counting up by one.
+If you omit the identifier, then
+FPP assigns a default identifier: zero for the first
+event in the component; otherwise one more than the
+identifier of the previous parameter.
+
+If you wish, you may explicitly specify one or more
+parameter identifiers.
+To do this, you write the keyword `id` followed
+by a numeric expression after the data type
+and after the default value, if any.
+Here is an example:
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ A component for illustrating default parameter identifiers
+passive component ParamIdentifiers {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command receive port
+  command recv port cmdIn
+
+  @ Command registration port
+  command reg port cmdRegOut
+
+  @ Command response port
+  command resp port cmdResponseOut
+
+  @ Parameter get port
+  param get port prmGetOut
+
+  @ Parameter set port
+  param set port prmSetOut
+
+  # ----------------------------------------------------------------------
+  # Parameters
+  # ----------------------------------------------------------------------
+
+  @ Parameter 1
+  @ Its implied identifier is 0x00
+  param Param1: U32 default 1
+
+  @ Parameter 2
+  @ Its identifier is 0x10
+  param Param2: F64 default 2.0 id 0x10
+
+  @ Parameter 3
+  @ Its implied identifier is 0x11
+  param Param3: F64x3 default [ 1.0, 2.0, 3.0 ]
+
+}
+----
+
+Within a component, the parameter identifiers must be unique.
+
+==== Set and Save Opcodes
+
+Each parameter that you specify has two implied commands: one
+for setting the value bound to the parameter locally in the
+component, and one for saving the current local value
+to the system-wide parameter database.
+The opcodes for these implied commands are called the *set and
+save opcodes* for the parameter.
+
+By default, FPP generates set and save opcodes for a
+parameter _P_ according to the following rules:
+
+* If no command or parameter appears before _P_ in the
+component, then the set opcode is 0, and the save opcode is 1.
+
+* Otherwise, let _o_ be the previous opcode defined
+in the component
+(either a command opcode or a parameter save opcode).
+Then the set opcode is _o_ + 1, and the save opcode is
+_o_ + 2.
+
+If you wish, you may specify either or both of the set and
+save opcodes explicitly.
+To specify the set opcode, you write the keywords `set` `opcode`
+and a numeric expression.
+To specify the save opcode, you write the keywords `save` `opcode`
+and a numeric expression.
+The set and save opcodes come after the type name, default
+parameter value, and parameter identifier.
+If both are present, the set opcode comes first.
+
+When you specify an explicit set or save opcode _o_, the
+default value for the next opcode is _o_ + 1.
+Here is an example:
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ A component for illustrating parameter set and save opcodes
+passive component ParamOpcodes {
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command receive port
+  command recv port cmdIn
+
+  @ Command registration port
+  command reg port cmdRegOut
+
+  @ Command response port
+  command resp port cmdResponseOut
+
+  @ Parameter get port
+  param get port prmGetOut
+
+  @ Parameter set port
+  param set port prmSetOut
+
+  # ----------------------------------------------------------------------
+  # Parameters
+  # ----------------------------------------------------------------------
+
+  @ Parameter 1
+  @ Its implied set opcode is 0x00
+  @ Its implied save opcode is 0x01
+  param Param1: U32 default 1
+
+  @ Parameter 2
+  @ Its set opcode is 0x10
+  @ Its save opcode is 0x11
+  param Param2: F64 \
+    default 2.0 \
+    id 0x10 \
+    set opcode 0x10 \
+    save opcode 0x11
+
+  @ Parameter 3
+  @ Its set opcode is 0x12
+  @ Its save opcode is 0x20
+  param Param3: F64x3 \
+    default [ 1.0, 2.0, 3.0 ] \
+    save opcode 0x20
+
+}
+----
+
+=== Constants and Types
+
+You can write a <<Defining-Constants,constant definition>>
+or <<Defining-Types,type definition>>
+as a component member.
+When you do this, the component qualifies
+the name of the constant or type, similarly to the way that a
+<<Defining-Modules,module>> qualifies the names of the
+definitions it contains.
+For example, if you define a type `T` inside a component
+`C`, then
+
+* Inside the definition of `C`, you can refer to the
+type as `T`.
+
+* Outside the definition of `C`, you must refer to the
+type as `C.T`.
+
+As an example, here is the `SerialSplitter` component
+from the section on 
+<<Defining-Components_Port-Instances_Serial-Port-Instances,
+serial port instances>>, where we have moved the
+definition of the constant `splitFactor`
+into the definition of the component.
+
+[source,fpp]
+----
+@ Component for splitting a serial data stream
+passive component SerialSplitter {
+
+  # ----------------------------------------------------------------------
+  # Constants 
+  # ----------------------------------------------------------------------
+
+  @ Split factor
+  constant splitFactor = 10
+
+  # ----------------------------------------------------------------------
+  # Ports 
+  # ----------------------------------------------------------------------
+
+  @ Input
+  sync input port serialIn: serial
+
+  @ Output
+  output port serialOut: [splitFactor] serial
+
+}
+----
+
+As another example, here is the `Switch` component from the section on
+<<Defining-Components_Commands_Formal-Parameters,
+command formal parameters>>, where we have moved the definition of
+the enum `State` into the component:
+
+[source,fpp]
+----
+@ A switch with on and off state
+active component Switch {
+
+  # ----------------------------------------------------------------------
+  # Types 
+  # ----------------------------------------------------------------------
+
+  @ The state enumeration
+  enum State {
+    OFF @< The off state
+    ON @< The on state
+  }
+
+  # ----------------------------------------------------------------------
+  # Ports
+  # ----------------------------------------------------------------------
+
+  @ Command registration
+  command reg port cmdRegOut
+
+  @ Command input
+  command recv port cmdIn
+
+  @ Command response
+  command resp port cmdResponseOut
+
+  # ----------------------------------------------------------------------
+  # Commands
+  # ----------------------------------------------------------------------
+
+  @ Set the state
+  async command SET_STATE(
+    state: State @< The new state
+  )
+
+}
+----
+
+In general, it is a good idea to state a definition inside a component
+when the definition logically belongs to the component.
+The name scoping mechanism emphasizes the hierarchical relationship
+and prevents name clashes.
+
+*XML limitation:* In most cases, a qualified name such as `Switch.State`
+in FPP becomes a qualified name such as `Switch::State` when translating
+to {cpp}.
+However, the F Prime XML format does not support the definition
+of constants and types as members of {cpp} components.
+Therefore, when translating the previous example through XML to {cpp}, 
+the following occurs:
+
+. The component `Switch` becomes an auto-generated {cpp} class
+`SwitchComponentBase`.
+
+. The type `State` becomes a {cpp} class `Switch_State`.
+
+Similarly, the FPP constant `SerialSplitter.splitFactor`
+becomes a {cpp} constant `SerialSplitter_SplitFactor`.
+We will have more to say about this issue in the sections on
+<<Analyzing-and-Translating-Models_Generating-XML,
+generating XML>>
+and
+<<Analyzing-and-Translating-Models_Generating-C-Plus-Plus,
+generating {cpp}>>.
+
+=== Include Specifiers
+
+Component definitions can become long, especially when there
+are many commands, events, telemetry channels, and parameters.
+In this case it is useful to break up the component
+definition into several files.
+
+For example, suppose you are defining a component with
+many commands, and you wish to place the commands in a
+separate file `Commands.fppi`.
+The suffix `.fppi` is conventional for included FPP files.
+Inside the component definition, you can write the
+following component member:
+
+[source,fpp]
+--------
+include "Commands.fppi"
+--------
+
+This construct is called an *include specifier*.
+During analysis and translation, the include specifier
+is replaced with the commands specified 
+in `Commands.fppi`, just as if you had written them
+at the point where you wrote the include specifier.
+This replacement is called expanding or resolving the
+include specifier.
+You can use the same technique for events, telemetry,
+parameters, or any other component members.
+
+The text enclosed in quotation marks after the keyword
+`include` is a path name relative to the directory of the
+file in which the include specifier appears.
+The file must exist and must contain component members
+that can validly appear at the point where the include
+specifier appears.
+For example, if `Commands.fppi` contains invalid syntax
+or syntax that may not appear inside a component,
+or if the file `Commands.fppi` does not exist, then
+the specifier `include "Commands.fppi"` is not valid.
+
+Include specifiers are perhaps most useful when defining
+components, but they can also appear at the top level of a
+model, inside a module definition, or inside a
+topology definition.
+We discuss include specifiers further in the section on
+<<Specifying-Models-as-Files_Include-Specifiers,
+specifying models as files>>.
+
+=== Matched Ports
+
+Some F Prime components employ the following pattern:
+
+. The component has a pair of port arrays, say `p1` and `p2`.
+The two arrays have the same number of ports.
+
+. For every connection between `p1` and another component
+instance, there must be a matching connection between that
+component instance and `p2`.
+
+. The matched pairs in item 2 must be connected to the
+same port numbers at `p1` and `p2`.
+
+In this case we call `p1` and `p2` a pair of
+*matched ports*.
+For example:
+
+* The standard Command Dispatcher component has matched ports
+`compCmdReg` for receiving command registration and
+`compCmdSend` for sending commands.
+
+* The standard Health component has matched ports
+`PingSend` for sending health ping messages and
+`PingReturn` for receiving responses to the ping messages.
+
+FPP provides special support for matched ports.
+Inside a component definition, you can write
+`match p1 with p2`, where `p1` and `p2` are the names of
+<<Defining-Components_Port-Instances,port instances>>
+defined in the component.
+When you do this, the following occurs:
+
+.  The FPP translator checks that `p1` and `p2` have
+the same number of ports.
+If not, an error occurs.
+
+.  When
+<<Defining-Topologies_Port-Numbering_Matched-Numbering,
+automatically numbering a topology>>, the
+translator ensures that the port numbers match in the manner
+described above.
+
+For example, here is a simplified version of the Health
+component:
+
+[source,fpp]
+----
+@ Number of health ping ports
+constant numPingPorts = 10
+
+queued component Health {
+
+  @ Ping output port
+  output port pingOut: [numPingPorts] Svc.Ping
+
+  @ Ping input port
+  async input port pingIn: [numPingPorts] Svc.Ping
+
+  @ Corresponding port numbers of pingOut and pingIn must match
+  match pingOut with pingIn
+
+}
+----
+
+This component defines a pair of matched ports
+`pingOut` and `pingIn`.

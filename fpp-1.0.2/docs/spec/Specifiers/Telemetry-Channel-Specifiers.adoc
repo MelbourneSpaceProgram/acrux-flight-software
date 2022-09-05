@@ -1,0 +1,115 @@
+=== Telemetry Channel Specifiers
+
+A *telemetry channel definition* defines a telemetry channel as part of a
+<<Definitions_Component-Definitions,component definition>>.
+
+==== Syntax
+
+`telemetry` <<Lexical-Elements_Identifiers,_identifier_>>
+`:` <<Type-Names,_type-name_>>
+_[_ 
+`id` <<Expressions,_expression_>>
+_]_
+_[_ 
+`update` _telemetry-update_
+_]_
+_[_ 
+`format` <<Expressions_String-Literals,_string-literal_>>
+_]_
+_[_ 
+`low` `{` _telemetry-limit-sequence_ `}`
+_]_ 
+_[_ 
+`high` `{` _telemetry-limit-sequence_ `}`
+_]_ 
+
+_telemetry-update_ is one of the following:
+
+* `always`
+
+* `on` `change`
+
+_telemetry-limit-sequence_ is an
+<<Element-Sequences,element sequence>>
+in which the elements are *telemetry limits*,
+and the terminating punctuation is a comma.
+A telemetry limit is one of the following:
+
+* `red` <<Expressions,_expression_>>
+
+* `orange` <<Expressions,_expression_>>
+
+* `yellow` <<Expressions,_expression_>>
+
+==== Semantics
+
+. The identifier names the telemetry channel.
+
+. The type name specifies the type of the telemetry channel.
+
+. The optional expression _e_ after the keyword `id` specifies the
+numeric identifier for the channel.
+If _e_ is present, then the type of _e_ must be
+<<Type-Checking_Type-Conversion,convertible to>>
+<<Types_Internal-Types_Integer,_Integer_>>, and _e_ must evaluate
+to a nonnegative integer.
+If _e_ is not present, then the
+default identifier is either zero (for the first channel appearing in a
+component) or the previous channel identifier plus one.
+
+. The optional update specifier specifies whether the telemetry channel
+is emitted always or on change.
+If the specifier is not present, the default behavior is always.
+
+. The optional format specifier specifies a <<Format-Strings,format string>>.
+There is one argument to the format string, which is the channel value.
+
+. The optional high and low limit specifiers specify the high and low limits
+for the channel. 
+The following rules apply:
+
+.. At most one of each kind of limit (red, orange, yellow) may appear
+in each specifier.
+
+.. The type of the expression in each limit must be a
+<<Types_Internal-Types_Numeric-Types,numeric type>> and must be
+<<Type-Checking_Type-Conversion,convertible to>> 
+the type of the channel.
+
+.. The limit is applied to each telemetry channel with type _T_ and value _v_ 
+as follows:
+
+... If _T_ is a
+<<Types_Internal-Types_Numeric-Types,numeric type>>, then the
+limit is applied directly to _v_.
+
+...  If _T_ is not itself a numeric type
+(e.g., it is an array), then the limit is applied recursively to each member 
+value of _v_.
+
+==== Examples
+
+[source,fpp]
+----
+@ An array of 3 F64 values
+array F64x3 = [3] F64
+
+@ Telemetry channel 0
+telemetry Channel0: U32 id 0x00
+
+@ Telemetry channel 1
+telemetry Channel1: U32 \
+  id 0x01 \
+  update on change
+
+@ Telemetry channel 2
+telemetry Channel2: F64 \
+  id 0x02 \
+  format "{.3f}"
+
+@ Telemetry channel 3
+telemetry Channel3: F64x3 \
+  id 0x03 \
+  low { yellow -1, orange -2, red -3 } \
+  high { yellow 1, orange 2, red 3 }
+----

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../../../../scripts/test-utils.sh
+
+cpp_doc_ok()
+{
+  ./hpp > C.hpp && \
+  ./cpp > C.cpp && \
+  gcc -c C.cpp
+}
+
+tests="
+cpp_doc_ok
+"
+
+echo 'compiling Scala source'
+if ./build > build_log.txt 2>&1
+then
+  run_suite $tests
+else
+  echo 'compilation failed'
+  echo 'scalac version 2.13.1 or greater required'
+  echo 'see build_log.txt for details'
+fi

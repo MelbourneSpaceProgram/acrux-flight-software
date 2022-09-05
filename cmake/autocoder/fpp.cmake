@@ -25,7 +25,7 @@ function(locate_fpp_tools)
         unset(${TOOL} CACHE)
         find_program(${TOOL} ${PROGRAM})
         # If the tool exists, check the version
-        if (TOOL AND FPRIME_SKIP_TOOLS_VERSION_CHECK)
+        if (TOOL OR FPRIME_SKIP_TOOLS_VERSION_CHECK)
             continue()
         elseif(TOOL)
             set(FPP_RE_MATCH "(v[0-9]+\.[0-9]+\.[0-9]+[a-g0-9-]*)")

@@ -1,0 +1,41 @@
+== Installing FPP
+
+Before reading the rest of this document, you should install
+the latest version of FPP.
+The installation instructions are available here:
+
+https://github.com/fprime-community/fpp/tree/main/compiler#compiler
+
+Make sure that the FPP command-line tools are in your shell path.
+For example, running `fpp-check` on the command line should succeed and should
+prompt for standard input. You can type control-C to end
+the program:
+
+----
+% fpp-check
+^C
+%
+----
+
+`fpp-check` is the tool for checking that an FPP model is valid.
+Like most FPP tools (except the ones that operate on XML files -- more on this 
+below),
+`fpp-check` reads either from named files or from standard input.
+If one or more files are named on the command line, `fpp-check` reads those;
+otherwise it reads from standard input.
+As an example, the following two operations are equivalent:
+
+----
+% fpp-check < file.fpp
+% fpp-check file.fpp
+----
+
+The first operation redirects `file.fpp` into the standard input of 
+`fpp-check`.
+The second operation names `file.fpp` as an input file of `fpp-check`.
+
+Most of the examples in the following sections are complete FPP models.
+You can run the models through
+`fpp-check` by typing or pasting them into a file or into standard input.
+We recommend that you to this for at least a few of the examples,
+to get a feel for how FPP works.

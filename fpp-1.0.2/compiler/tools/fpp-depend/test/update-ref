@@ -1,0 +1,92 @@
+#!/bin/sh
+
+. ../../../scripts/test-utils.sh
+
+fpp_depend=../../../bin/fpp-depend
+
+update()
+{
+  args=$1
+  infile=$2
+  if test -n "$3"
+  then
+    outfile=$3
+  else
+    outfile=$infile
+  fi
+  $fpp_depend $args $infile.fpp 2>&1 | remove_path_prefix > $outfile.ref.txt
+}
+
+for file in `find . -name '*.ref.txt'`
+do
+  rm $file
+done
+
+. ./tests.sh
+
+# Default update ref
+for t in $tests
+do
+  echo "
+$t()
+{
+  update '' $t
+}"
+done > default-update-ref.sh
+. ./default-update-ref.sh
+
+# Custom update ref
+direct() {
+  update '-d tmp.out.txt' direct_a direct
+  remove_path_prefix < tmp.out.txt > direct_output.ref.txt
+}
+
+filenames() {
+  update '-g filenames_output.ref.txt' filenames
+}
+
+filenames_include() {
+  update '-g filenames_include_output.ref.txt' filenames_include
+}
+
+framework() {
+  update '-f framework_output.ref.txt' framework
+}
+
+framework_include() {
+  update '-f framework_include_output.ref.txt' framework_include
+}
+
+include() {
+  update '-i tmp.out.txt' include
+  remove_path_prefix < tmp.out.txt > include_output.ref.txt
+}
+
+included_dep_i() {
+  update '-i tmp.out.txt' included_dep included_dep_i
+  remove_path_prefix < tmp.out.txt > included_dep_i_output.ref.txt
+}
+
+input() {
+  update '' 'input_1.fpp input_2' input
+}
+
+locate_constant_include_i() {
+  update '-i tmp.out.txt' locate_constant_include_1 locate_constant_include_i
+  remove_path_prefix < tmp.out.txt > locate_constant_include_i_output.ref.txt
+}
+
+locate_constant_include_no_i()
+{
+  update '' locate_constant_include_1 locate_constant_include_no_i
+}
+
+missing() {
+  update '-m tmp.out.txt' missing; remove_path_prefix < tmp.out.txt > missing_output.ref.txt
+}
+
+for t in $tests
+do
+  echo "updating ref output for $t"
+  $t
+done

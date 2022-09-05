@@ -1,0 +1,4 @@
+== Definitions
+
+A *definition* is a unit of syntax that introduces a name _N_
+and associates some code with _N_.

@@ -1,0 +1,47 @@
+#!/bin/sh
+
+. ../../../scripts/test-utils.sh
+
+fpp_syntax=../../../bin/fpp-syntax
+
+update()
+{
+  args=$1
+  infile=$2
+  if test -n "$3"
+  then
+    outfile=$3
+  else
+    outfile=$infile
+  fi
+  echo "updating $outfile.ref.txt"
+  $fpp_syntax $args $infile.fpp 2>&1 | remove_path_prefix > $outfile.ref.txt
+}
+
+for file in `find . -name '*.ref.txt'`
+do
+  rm $file
+done
+
+update "" comments
+update "" parse-error
+update "" syntax
+update "" syntax-kwd-names
+update -a empty
+update -a escaped-strings
+update -a syntax syntax-ast
+update -i cycle-1 include-cycle-1
+update -i cycle-2 include-cycle-2
+update -i include-missing-file
+update -i include-parse-error
+update -ia include-component
+update -ia include-constant-1 include-constant-1
+update -ia include-module
+update -ia include-subdir
+update -ia include-topology
+update -ia subdir/include-parent-dir
+update -ia syntax syntax-include-ast
+
+cat syntax.fpp | $fpp_syntax -ia 2>&1 > syntax-stdin.ref.txt
+
+$fpp_syntax -ia include-module.fpp include-component.fpp 2>&1 > two-input-files.ref.txt

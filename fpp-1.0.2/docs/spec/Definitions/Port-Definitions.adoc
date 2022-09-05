@@ -1,0 +1,58 @@
+=== Port Definitions
+
+An *port definition* defines an F Prime port.
+A port is the endpoint of a connection between F Prime components.
+
+==== Syntax
+
+`port`
+<<Lexical-Elements_Identifiers,_identifier_>>
+_[_
+`(`
+<<Formal-Parameter-Lists,_param-list_>>
+`)`
+_]_
+_[_
+`pass:[->]`
+<<Type-Names,_type-name_>>
+_]_
+
+==== Semantics
+
+* The identifier is the name of the port.
+
+* The optional parameter list specifies the formal parameters of the
+port.
+Each formal parameter is a piece of data carried on the port.
+If there are no formal parameters, then the parameter list
+may be omitted.
+
+* If the annotation `ref` appears in a formal parameter _P_,
+then _P_ is passed by reference in a synchronous port invocation
+and by value in an asynchronous port invocation.
+
+* The optional type name appearing after the arrow specifies
+an optional return type for the port.
+If present, the return type is the type of the data returned
+when the port is invoked in a synchronous context.
+
+==== Examples
+
+[source,fpp]
+----
+@ Port 1
+port Port1(
+    a: U32 @< Parameter a
+    b: F64 @< Parameter b
+)
+
+@ Port 2
+port Port2(
+    ref a: Fw.Com @< Ref parameter a
+)
+
+@ Port 3
+port Port3(
+    a: U32 @< Parameter a
+) -> U32
+----

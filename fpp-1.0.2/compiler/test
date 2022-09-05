@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export COMPILER_ROOT=$PWD
+scripts/test

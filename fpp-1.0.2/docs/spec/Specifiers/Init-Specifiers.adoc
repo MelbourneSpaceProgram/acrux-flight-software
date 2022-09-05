@@ -1,0 +1,82 @@
+=== Init Specifiers
+
+An *init specifier* associates some code with a 
+<<Definitions_Component-Instance-Definitions,
+component instance>>.
+Usually this is initialization code, hence the name.
+It may also serve another purpose (e.g., teardown).
+
+==== Syntax
+
+`phase` <<Expressions,_expression_>>
+<<Expressions_String-Literals,_string-literal_>>
+
+==== Semantics
+
+* The expression following the keyword `phase` must have
+a <<Types_Internal-Types_Numeric-Types,numeric type>>.
+It provides an integer identifier for an initialization phase.
+
+* Each component instance may have at most one init specifier
+for each distinct numeric phase.
+
+* The code string specifies some code in a target language
+that is associated with the instance.
+
+The meaning of the initialization phase and the code depends
+on the translation context.
+
+==== Example
+
+[source,fpp]
+----
+@ Phases of initialization
+enum Phases {
+  @ When components are constructed
+  CONSTRUCTION
+  @ After components are constructed, and before connections are established
+  BEFORE_CONNECTIONS
+  @ After connections are established
+  AFTER_CONNECTIONS
+  @ When components are deallocated
+  TEARDOWN
+}
+
+instance commandDispatcher: Svc.CommandDispatcher \
+  base id 0x100 \
+  queue size 10 \
+  stack size 4096 \
+  priority 30 \
+{
+
+  phase BEFORE_CONNECTIONS  """
+  commandDispatcher.init(QueueDepth::commandDispatcher);
+  """
+
+}
+----
+
+In this example, the code generator provides three phases,
+`CONSTRUCTION`, `BEFORE_CONNECTIONS`, `AFTER_CONNECTIONS`,
+and `TEARDOWN`.
+In the `CONSTRUCTION` phase, the code generator generates
+a default constructor invocation that looks like this:
+
+[source,fpp]
+----
+Svc::CommandDispatcher commandDispatcher("commandDispatcher");
+----
+
+By default, the code generator might generate this code
+to run before connections are established:
+
+[source,c++]
+----
+commandDispatcher.init(
+    QueueDepth::commandDispatcher,
+    InstanceID::commandDispatcher
+);
+----
+
+The code shown above overrides the code generated for the second
+phase to remove the instance ID from the arguments of the `init` method.

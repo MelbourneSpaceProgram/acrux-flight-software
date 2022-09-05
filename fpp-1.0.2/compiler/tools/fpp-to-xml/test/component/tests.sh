@@ -1,0 +1,12 @@
+tests="
+commands
+empty
+events
+general_ports
+internal_ports
+parameters
+ports
+special_ports
+telemetry
+types
+"

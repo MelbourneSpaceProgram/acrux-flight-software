@@ -1,0 +1,971 @@
+== Defining Topologies
+
+In F Prime, a *topology* or connection graph is the
+highest level of software architecture in a FSW application.
+A topology specifies what
+<<Defining-Component-Instances,component instances>>
+are used in the application and how their
+<<Defining-Components_Port-Instances,port instances>>
+are connected.
+
+An F Prime FSW application consists of a topology _T_;
+all the types, ports, and components used by _T_;
+and a small amount of top-level {cpp} code that you write by hand.
+In the section on
+<<Writing-C-Plus-Plus-Implementations_Implementing-Deployments,
+implementing deployments>>, we will explain more about the top-level
+{cpp} code.
+In this section we explain how to define a topology in FPP.
+
+=== A Simple Example
+
+We begin with a simple example that shows how many of the pieces
+fit together.
+
+[source,fpp]
+----
+port P
+
+passive component C {
+  sync input port pIn: P
+  output port pOut: P
+}
+
+instance c1: C base id 0x100
+instance c2: C base id 0x200
+
+@ A simple topology
+topology Simple {
+
+  @ This specifier says that instance c1 is part of the topology
+  instance c1
+  @ This specifier says that instance c2 is part of the topology
+  instance c2
+
+  @ This code specifies a connection graph C1
+  connections C1 {
+    c1.pOut -> c2.pIn
+  }
+
+  @ This code specifies a connection graph C2
+  connections C2 {
+    c2.pOut -> c1.pIn
+  }
+
+}
+----
+
+In this example, we define a <<Defining-Ports,port>> `P`.
+Then we define a <<Defining-Components,passive component>> `C`
+with an input port and an output port, both of type `P`.
+We define two  <<Defining-Component-Instances,instances>> of
+`C`, `c1` and `c2`.
+We put these instances into a topology called `Simple`.
+
+As shown, to define a topology, you write the keyword `topology`,
+the name of the topology, and the members of the topology
+definition enclosed in curly braces.
+In this case, the topology has two kinds of members:
+
+. Two *instance specifiers* specifying that instances
+`c1` and `c2` are part of the topology.
+
+. Two *graph specifiers* that specify connection graphs
+named `C1` and `C2`.
+
+As shown, to write an instance specifier, you write the
+keyword `instance` and the name of a component instance
+definition.
+In general the name may be a qualified name such as `A.B`
+if the instance is defined inside a
+<<Defining-Modules,module>>; in this simple
+example it is not.
+Each instance specifier states that the instance it names
+is part of the topology.
+The instances appearing in the list must be distinct.
+For example, this is not correct:
+
+[source,fpp]
+--------
+topology T {
+  instance c1
+  instance c1 # Error: duplicate instance c1
+}
+--------
+
+A graph specifier specifies one or more connections
+between component instances.
+Each graph specifier has a name.
+By dividing the connections of a topology into named
+graphs, you can organize the connections in a meaningful way.
+For example you can have one graph group
+for connections that send commands, another one
+for connections that send telemetry, and so forth.
+We will have more to say about this in a later section.
+
+As shown, to write a graph specifier, you may write the keyword `connections`
+followed by the name of the graph; then you may list
+the connections inside curly braces.
+(In the next section, we will explain another way to write a graph specifier.)
+Each connection consists of an endpoint, an arrow `pass:[->]`,
+and another endpoint.
+An endpoint is the name of a component instance
+(which in general may be a qualified name), a dot,
+and the name of a port of that component instance.
+
+In this example there are two connection graphs, each containing
+one connection:
+
+. A connection graph `C1` containing a connection from `c1.pOut` to `c2.pIn`.
+
+. A connection graph `C2` containing a connection from `c2.pOut` to `c1.pIn`.
+
+As shown, topologies and their members are
+<<Writing-Comments-and-Annotations_Annotations,annotatable elements>>.
+The topology members form an
+<<Defining-Constants_Multiple-Definitions-and-Element-Sequences,
+element sequence>> in which the optional
+terminating punctuation is a semicolon.
+
+=== Connection Graphs
+
+In general, an FPP topology consists of a list of instances
+and a set of named connection graphs.
+There are two ways to specify connection graphs:
+*direct graph specifiers* and *pattern graph specifiers*.
+
+==== Direct Graph Specifiers
+
+A direct graph specifier provides a name and a list
+of connections.
+We illustrated direct graph specifiers in the
+previous section, where the simple topology example
+included direct graph specifiers for graphs named
+`C1` and `C2`.
+Here are some more details about direct graph specifiers.
+
+Each instance named in a connection must be part of the
+instance list in the topology.
+For example, if you write a connection `a.b pass:[->] c.d` inside
+a topology `T`, and the specifier `instance a` does not
+appear inside topology `T`, then you will get an error --
+even if `a` is a valid instance name for the FPP model.
+The reason for this rule is that in flight code we need
+to be very careful about which instances are included
+in the application.
+Naming all the instances also lets us check for
+<<Analyzing-and-Translating-Models_Checking-Models,
+unconnected ports>>.
+
+You may use the same name in more than one direct
+graph specifier in the same topology.
+If you do this, then all specifiers with the same
+name are combined into a single graph with that name.
+For example, this code
+
+[source,fpp]
+--------
+connections C {
+  a.p -> b.p
+}
+connections C {
+  c.p -> d.p
+}
+--------
+
+is equivalent to this code:
+
+[source,fpp]
+--------
+connections C {
+  a.p -> b.p
+  c.p -> d.p
+}
+--------
+
+The members of a direct graph specifier form an
+<<Defining-Constants_Multiple-Definitions-and-Element-Sequences,
+element sequence>> in which the optional
+terminating punctuation is a comma.
+For example, you can write this:
+
+[source,fpp]
+--------
+connections C { a.p -> b.p, c.p -> d.p }
+--------
+
+==== Pattern Graph Specifiers
+
+A few connection patterns are so common in F Prime that they
+get special treatment in FPP.
+For example, an F Prime topology typically includes an
+instance of the component `Svc.Time`.
+This component has a port `timeGetPort`
+of type `Fw.Time` that other components can use to get the system
+time.
+Any component that gets the system time
+(and there are usually several) has a connection to
+the `timeGetPort` port of the `Svc.Time` instance.
+
+Suppose you are constructing a topology in which
+(1) `sysTime` is an instance of `Svc.Time`; and (2)
+each of the instances
+`a`, `b`, `c`, etc., has a
+<<Defining-Components_Special-Port-Instances_Time-Get-Ports, time get port>>
+`timeGetOut` port connected to `sysTime.timeGetPort`,
+If you used a direct graph specifier to write all these connections,
+the result might look like this:
+
+[source,fpp]
+--------
+connections Time {
+  a.timeGetOut -> sysTime.timeGetPort
+  b.timeGetOut -> sysTime.timeGetPort
+  c.timeGetOut -> sysTime.timeGetPort
+  ...
+}
+--------
+
+This works, but it is tedious and repetitive. So FPP provides
+a better way: you can use a *pattern graph specifier*
+to specify this common pattern.
+You can write
+
+[source,fpp]
+--------
+time connections instance sysTime
+--------
+
+This code says the following:
+
+. Use the instance `sysTime` as the instance of `Fw.Time`
+for the time connection pattern.
+
+. Automatically construct a direct graph specifier named `Time`.
+In this direct graph specifier, include one connection
+from each component instance that has a time get port
+to the input port of `sysTime` of type `Fw.Time`.
+
+The result is as if you had written the direct graph specifier
+yourself.
+All the other rules for direct graph specifiers apply: for example,
+if you write another direct graph specifier with name `Time`, then
+the connections in that specifier are merged with the connections
+generated by the pattern specifier.
+
+In the example above, we call `time` the *kind* of the pattern
+graph specifier.
+We call `sysTime` the *source instance* of the pattern.
+It is the source of all the time pattern connections
+in the topology.
+We call the instances that have time get ports (and so contribute
+connections to the pattern) the *target instances*.
+They are the instances targeted by the pattern once the source
+instance is named.
+
+Table <<pattern-graph-specifiers>> shows the pattern graph
+specifiers allowed in FPP.
+The columns of the table have the following meanings:
+
+* *Kind:* The keyword or keywords denoting the kind.
+When writing the specifier, these appear just before
+the keyword `connections`, as shown above for the time example.
+
+* *Source Instance:* The source instance for the pattern.
+
+* *Target Instances:* The target instances for the pattern.
+
+* *Graph Name:* The name of the connection graph
+generated by the pattern.
+
+* *Connections:* The connections generated by the pattern.
+
+The command pattern specifier generates three connection graphs:
+`Command`, `CommandRegistration`, and `CommandResponse`.
+
+[[pattern-graph-specifiers]]
+.Pattern Graph Specifiers
+|===
+|Kind|Source Instance|Target Instances|Graph Name|Connections
+
+|
+|
+|
+|`Command`
+|All connections from the unique output port of type `Fw::Cmd`
+of the source instance to the
+<<Defining-Components_Special-Port-Instances_Command-Ports,
+`command` `recv` port>>
+of each target instance.
+
+|`command`
+|An instance of `Svc.CommandDispatcher` or a similar component for
+dispatching commands.
+The instance must have a unique output port of type `Fw.Cmd`,
+a unique input port of type `Fw.CmdReg`, and a unique
+input port of type `Fw.CmdResponse`.
+|Each instance that has
+<<Defining-Components_Special-Port-Instances_Command-Ports,
+command ports>>.
+|`CommandRegistration`
+|All connections from the
+<<Defining-Components_Special-Port-Instances_Command-Ports,
+`command` `reg` port>> of each target instance to the
+unique input port of type `Fw.CmdReg` of the source instance.
+
+|
+|
+|
+|`CommandResponse`
+|All connections from the
+<<Defining-Components_Special-Port-Instances_Command-Ports,
+`command` `resp` port>> of each target instance to the
+unique input port of type `Fw.CmdResponse` of the source instance.
+
+|`event`
+|An instance of `Svc.ActiveLogger` or a similar component for
+logging event reports.
+The instance must have a unique input port of type
+`Fw.Log`.
+|Each instance that has an 
+<<Defining-Components_Special-Port-Instances_Event-Ports,
+`event` port>>.
+|`Events`
+|All connections from the
+<<Defining-Components_Special-Port-Instances_Event-Ports,
+`event` port>> of each target instance to the unique
+input port of type `Fw.Log` of the source instance.
+
+|`health`
+|An instance of `Svc.Health` or a similar component for
+health monitoring.
+The instance must have a unique output port of type
+`Svc.Ping` and a unique input port of type `Svc.Ping`.
+|Each instance other than the source instance
+that has a unique output port of type
+`Svc.Ping` and a unique input port of type `Svc.Ping`.
+|`Health`
+|(1) All connections from the unique output port of type
+`Svc.Ping` of each target instance to the unique input
+port of type `Svc.Ping` of the source instance.
+(2) All connections from the unique output port of type
+`Svc.Ping` of the source instance to the unique
+input port of type `Svc.Ping` of each target instance.
+
+|`param`
+|An instance of `Svc.PrmDb` or a similar component representing
+a database of parameters.
+The instance must have a unique input port of type `Fw.PrmGet`
+and a unique input port of type `Fw.PrmSet`.
+|Each instance that has
+<<Defining-Components_Special-Port-Instances_Parameter-Ports,
+parameter ports>>.
+|`Parameters`
+|(1) All connections from the
+<<Defining-Components_Special-Port-Instances_Parameter-Ports,
+`param` `get` port>> of each target instance
+to the unique input port of type `Fw.PrmGet` of the source instance.
+(2) All connections from the
+<<Defining-Components_Special-Port-Instances_Parameter-Ports,
+`param` `set` port>> of each target instance
+to the unique input port of type `Fw.PrmSet` of the source instance.
+
+|`telemetry`
+|An instance of `Svc.TlmChan` or a similar component for
+storing channelized telemetry.
+The instance must have a unique input port of type `Fw.Tlm`.
+|Each instance that has a <<Defining-Components_Special-Port-Instances_Telemetry-Ports,
+telemetry port>>.
+|`Telemetry`
+|All connections from the
+<<Defining-Components_Special-Port-Instances_Telemetry-Ports,
+`telemetry` port>> of each target instance to the unique input
+port of type `Fw.Tlm` of the source instance.
+
+|`text` `event`
+|An instance of `Svc.PassiveTextLogger` or a similar component
+for logging event reports in textual form.
+The instance must have a unique input port of type `Fw.LogText`.
+|Each instance that has a <<Defining-Components_Special-Port-Instances_Event-Ports,
+`text` `event` port>>.
+|`TextEvents`
+|All connections from the
+<<Defining-Components_Special-Port-Instances_Event-Ports,
+`text` `event` port>> of each target instance to the unique
+input port of type `Fw.LogText` of the source instance.
+
+|`time`
+|An instance of `Svc.Time` or a similar component for providing
+the system time.
+The instance must have a unique input port of type `Fw.Time`.
+|Each instance that has a
+<<Defining-Components_Special-Port-Instances_Time-Get-Ports,
+`time` `get` port>>.
+|`Time`
+|All connections from the
+<<Defining-Components_Special-Port-Instances_Time-Get-Ports,
+`time` `get` port>> of each target instance to the unique
+input port of type `Fw.Time` of the source instance.
+
+|===
+
+Here are some rules for writing graph pattern specifiers:
+
+. At most one occurrence of each pattern kind is allowed in
+each topology.
+
+. For each pattern, the required ports shown in the table
+must exist and must be unambiguous.
+For example, if you write a time pattern
++
+[source,fpp]
+--------
+time connections instance sysTime
+--------
++
+then you will get an error if `sysTime` has no
+input ports of type `Fw.Time`,
+You will also get an error if `sysTime` has two or more
+such ports.
+
+The default behavior for a pattern is
+to generate the connections for all target instances
+as shown in the table.
+If you wish, you may generate connections for a selected
+set of target instances.
+To do this, you write a list of target instances enclosed in
+curly braces after the source instance.
+For example, suppose a topology contains instances
+`a`, `b`, and `c` each of which has an output port
+that satisfies the time pattern.
+And suppose that `sysTime` is an instance of `Svc.Time`.
+Then if you write this pattern
+
+[source,fpp]
+--------
+time connections instance sysTime
+--------
+
+you will get a connection graph `Time` containing
+time connections from each of `a`, `b`, and `c` to `sysTime`.
+But if you write this pattern
+
+[source,fpp]
+--------
+time connections instance sysTime {
+  a
+  b
+}
+--------
+
+then you will just get the connections from `a` and `b`
+to `sysTime`.
+The instances `a` and `b` must be valid target instances
+for the pattern.
+
+As with connections, you can write the instances `a` and `b`
+each on its own line, or you can separate them with commas:
+
+[source,fpp]
+--------
+time connections instance sysTime { a, b }
+--------
+
+=== Port Numbering
+
+As discussed in the
+<<Defining-Components_Port-Instances_Arrays-of-Port-Instances,
+section on defining components>>,
+each named port instance is actually an array of
+one or more port instances.
+When the size of the array exceeds one, you
+must specify the port number (i.e., the array index)
+of each connection going into or out of the port instance.
+In FPP, there are three ways to specify port numbers:
+explicit numbering, matched numbering, and general numbering.
+
+==== Explicit Numbering
+
+To use explicit numbering, you provide an explicit port number
+for a connection endpoint.
+You write the port number as a 
+<<Defining-Constants_Expressions,numeric expression>>
+in square brackets, immediately following the port name.
+The port numbers start at zero.
+
+For example, the `RateGroups` graph of the reference topology in the F Prime 
+repository defines the rate group connections.
+It contains the following connection:
+
+[source,fpp]
+--------
+rateGroupDriverComp.CycleOut[Ports.RateGroups.rateGroup1] -> rateGroup1Comp.CycleIn
+rateGroup1Comp.RateGroupMemberOut[0] -> SG1.schedIn
+rateGroup1Comp.RateGroupMemberOut[1] -> SG2.schedIn
+rateGroup1Comp.RateGroupMemberOut[2] -> chanTlm.Run
+rateGroup1Comp.RateGroupMemberOut[3] -> fileDownlink.Run
+--------
+
+The first line says to connect the port at index
+`Ports.RateGroups.rateGroup1` of `rateGroupDriverComp.CycleOut`
+to `rateGroup1Comp.CycleIn`.
+The symbol `Ports.RateGroups.rateGroup1` is an enumerated constant, defined
+like this:
+
+[source,fpp]
+----
+module Ports {
+
+  enum RateGroups {
+    rateGroup1
+    rateGroup2
+    rateGroup3
+  }
+
+}
+----
+
+The second and following lines say to connect the ports of
+`rateGroup1Comp.RateGroupMemberOut` at the indices 0, 1, 2, and 3
+in the manner shown.
+
+As another example, the `Downlink` graph of the reference topology 
+contains the following connection:
+
+[source,fpp]
+--------
+downlink.framedAllocate -> staticMemory.bufferAllocate[Ports.StaticMemory.downlink]
+--------
+
+This line says to connect `downlink.framedAllocate` to
+`staticMemory.bufferAllocate` at index
+`Port.StaticMemory.downlink`.
+Again the port index is a symbolic constant.
+
+If you wish, you may write two explicit port numbers,
+one at each endpoint.
+For example:
+
+[source,fpp]
+--------
+a.b[0] -> c.d[1]
+--------
+
+Here are some rules to keep in mind when using explicit numbering:
+
+. You can write any numeric expression as a port number.
+Each port number must be in bounds for the port (greater than
+zero and less than the size of the port array).
+If you write a port number that is out of bounds, you will get an error.
+
+. Use symbolic constants judiciously.
+Avoid scattering "magic" literal
+constants throughout the topology definition.
+For example:
+
+.. The Ref topology uses the symbolic constants
+`Ports.RateGroups.rateGroup1` and `Ports.StaticMemory.downlink`, as shown
+above.
+Because these constants appear in several different places, it is 
+better to use symbolic constants here.
+Using literal constants would decrease readability and increase
+the chance of using incorrect or inconsistent numbers.
+
+.. The Ref topology uses the literal constants 0, 1, 2, and 3
+to connect the ports of `rateGroup1Comp.RateGroupMemberOut`.
+Here there are no obvious names to associate with the numbers, 
+the numbers go in sequence, and all the numbers appear together in one place.
+So there is no clear benefit to giving them names.
+
+. Remember that in F Prime, multiple connections can go to the same
+input port, but only one connection can go from each output port.
+For example, this code is allowed:
++
+[source,fpp]
+--------
+c1.p1 -> c2.p[0]
+c1.p2 -> c2.p[0] # OK: Two connections into c2.p[0]
+--------
++
+But this code is incorrect:
++
+[source,fpp]
+--------
+c1.p[0] -> c2.p1
+c1.p[0] -> c2.p2 # Error: Two connections out of c1.p[0]
+--------
+
+. Use explicit numbering as little as possible.
+Instead, use matched numbering or general numbering
+(described in the next sections) and let FPP
+do the numbering for you.
+In particular, avoid writing zero indices such as
+`c.p[0]` except in cases where you need to control the assignment
+of numbers, such as in the rate group example shown above.
+In other cases, write `c.p` and let FPP infer
+the zero index.
+For example, this is what we did in the section on
+<<Defining-Topologies_Connection-Graphs_Direct-Graph-Specifiers,
+direct graph specifiers>>.
+
+==== Matched Numbering
+
+*Automatic matching:*
+After resolving
+<<Defining-Topologies_Port-Numbering_Explicit-Numbering,
+explicit numbering>>, the FPP translator applies
+*matched numbering*.
+In this step, the translator numbers all pairs of
+<<Defining-Components_Matched-Ports,matched ports>>.
+
+Matched numbering is essential for resolving the command and health
+<<Defining-Topologies_Connection-Graphs_Pattern-Graph-Specifiers,
+patterns>>, each of which has matched ports.
+You can also use matched numbering in conjunction with direct
+graph specifiers.
+For example, the Ref topology contains the following connections:
+
+[source,fpp]
+--------
+connections Sequencer {
+  cmdSeq.comCmdOut -> cmdDisp.seqCmdBuff
+  cmdDisp.seqCmdStatus -> cmdSeq.cmdResponseIn
+}
+
+connections Uplink {
+  ...
+  uplink.comOut -> cmdDisp.seqCmdBuff
+  cmdDisp.seqCmdStatus -> uplink.cmdResponseIn
+  ...
+}
+--------
+
+The port `cmdDisp.seqCmdBuff` port of the command dispatcher receives
+command input from the command sequencer or from the ground.
+The corresponding command response goes out on
+port `cmdDisp.seqCmdStatus`.
+These two ports are matched in the definition of the Command
+Sequencer component.
+
+When you use matched numbering with direct graph specifiers, you
+must obey the following rules:
+
+. When a component has the matching specifier
+`match p1 with p2`, for every connection between `p1`
+and another component, there must be a corresponding
+connection between that other component and `p2`.
+
+. You can use explicit numbering, and the automatic matching
+will work around the numbers you supply if it can.
+However, you may not do this in a way that makes the matching impossible.
+For example, you may not connect `p1[0]` to another component
+and `p2[1]` to the same component, because this connection
+forces a mismatch.
+
+If you violate these rules, you will get an error during
+analysis.
+
+*Manual matching:*
+Automatic matched numbering works when each matched pair of connections
+goes between the same two components, one of which
+has a matched pair of ports.
+If the matching does not follow this pattern, then automatic matched
+numbering will not work, and you will need to use explicit port
+numbers to express the matching.
+For example, the Ref topology contains these connections:
+
+[source,fpp]
+--------
+comm.allocate -> staticMemory.bufferAllocate[Ports.StaticMemory.uplink]
+comm.$recv -> uplink.framedIn
+uplink.framedDeallocate -> staticMemory.bufferDeallocate[Ports.StaticMemory.uplink]
+--------
+
+In this case the `staticMemory` instance requires that pairs of
+allocation and deallocation requests for the same memory
+go to the same port.
+But the allocation request comes from `comm`,
+and the deallocation request comes from `uplink`.
+Since the allocation and deallocation connections go to different
+component instances, we can't used automatic matched numbering.
+Instead we define a symbolic constant `Ports.StaticMemory.uplink`
+and use that twice to do the matching by hand.
+
+==== General Numbering
+
+After resolving 
+<<Defining-Topologies_Port-Numbering_Explicit-Numbering,
+explicit numbering>> and
+<<Defining-Topologies_Port-Numbering_Matched-Numbering,
+matched numbering>>,
+the FPP translator applies
+*general numbering*.
+In this step, the translator uses the following algorithm to
+fill in any remaining unassigned
+port numbers:
+
+. Traverse the connections in a deterministic order.
+The order is fully described in _The FPP Language Specification_.
+
+. For each connection
+
+.. If the output port number is unassigned, then set it to the
+lowest available port number.
+
+.. If the input port number is unassigned, then set it to zero.
+
+For example, consider the following connections:
+
+[source,fpp]
+--------
+a.p -> b.p
+a.p -> c.p
+--------
+
+After general numbering, the connections could be numbered
+as follows:
+
+[source,fpp]
+--------
+a.p[0] -> b.p[0]
+a.p[1] -> c.p[0]
+--------
+
+
+=== Importing Topologies
+
+It is often useful to decompose a flight software project
+into several topologies.
+For example, a project might have the following topologies:
+
+. A topology for command and data handling (CDH) with
+components such as a command dispatcher, an event logger, a telemetry data 
+base,
+a parameter database, and components for managing files.
+
+. Various subsystem topologies, for example power, thermal,
+attitude control, etc.
+
+. A release topology.
+
+Each of the subsystem topologies might include the CDH topology.
+The release topology might include the CDH topology
+and each of the subsystem topologies.
+Further, to enable modular testing, it is useful for 
+each topology to be able to run on its own.
+
+In FPP, the way we accomplish these goals is to *import*
+one topology into another one.
+In this section of the User Guide, we explain how to do that.
+
+==== Importing Instances and Connections
+
+To import a topology `A` into a topology `B`, you write
+`import A` inside topology `B`, like this:
+
+[source,fpp]
+--------
+topology B {
+  
+  import A
+
+  ...
+
+}
+--------
+
+You may add instances and connections as usual to `B`, as shown
+by the dots.
+
+When you do this, the FPP translator does the following:
+
+. *Resolve `A`:* Resolve all pattern graph
+specifiers in `A`, and resolve all explicit port numbers in `A`.
+Call the resulting topology `T`.
+
+. *Form the instances of `B`:*
+Take the union of the instances specified in `T` and
+the instances specified in `B`, counting any duplicates once.
+These are the instances of `B`.
+
+. *Form the connections of `B`:*
+Take the union of the connection graphs specified in `T` and
+the connection graphs specified in `B`.
+If each of `T` and `B` has a connection between the same
+ports, then each becomes a separate connection in `B`.
+
+. *Resolve `B`:* Resolve the pattern graph specifies of `B`.
+Apply matched numbering and general numbering to `B`.
+
+For example, suppose topologies `A` and `B` are defined
+as follows:
+
+[source,fpp]
+--------
+topology A {
+
+  instance a
+  instance b
+
+  connections C1 {
+    a.p1 -> b.p
+  }
+
+}
+
+topology B {
+
+  import A
+
+  instance c
+
+  connections C1 {
+    a.p1 -> c.p
+  }
+
+  connections C2 {
+    a.p2 -> c.p
+  }
+
+}
+--------
+
+After import resolution, `B` is equivalent to this topology:
+
+[source,fpp]
+--------
+topology B {
+
+  instance a
+  instance b
+  instance c
+
+  connections C1 {
+    a.p1 -> b.p
+    a.p1 -> c.p
+  }
+
+  connections C2 {
+    a.p2 -> c.p
+  }
+
+}
+--------
+
+Notice that the `C1` connections of `A` are merged with the `C1`
+connections of `B`.
+
+==== Private Instances
+
+Often when importing topology `A` into topology `B`, you
+want to include one or more instances in `A` that exist just
+for running `A`, but that you don't want imported into `B`.
+For example, `A` could have an instance `cStub` which is a stub version of 
+a component `c` that is fully implemented in `B`.
+In this case
+
+* When running `A` you may need `cStub`; the topology
+may not run or may not even compile without it.
+
+* When importing `A` into `B` you don't want to import
+`cStub`, because it is superseded by the real implementation `c` in `B`.
+Also, any connections to `cStub` in `A` should be replaced
+by connections to `c` in `B`.
+
+To handle this case, you can make `cStub` a *private* instance
+of `A` and `c` an instance of `B`.
+When you import `B` into `A`, `cStub` will not become an instance
+of `B`.
+Further, no connections in `A` involving `cStub` will be imported
+into `B`.
+
+As an example, suppose we revise topology `A` from the previous
+section as follows:
+
+[source,fpp]
+--------
+topology A {
+
+  instance a
+  instance b
+  private instance d
+
+  connections C1 {
+    a.p1 -> b.p
+  }
+
+  connections C2 {
+    a.p1 -> d.p
+  }
+
+}
+--------
+
+Notice that we have added an instance `d` to topology
+`A`, and we have declared `d` private to `A`.
+We have also added a new connection to `d` in the
+connection graph `C2`.
+
+Now suppose that we use the same definition of `B` given 
+in the previous section.
+After import resolution, `B` will still be equivalent
+to the topology shown at the end of the last section:
+we have added an instance and a connection to `A`,
+but the instance is private and the connection goes
+from a private instance, so neither the instance nor
+the connection is imported into `B`.
+
+==== Multiple Imports
+
+Multiple imports are allowed.
+For example:
+
+[source,fpp]
+--------
+topology A {
+
+  import B
+  import C
+
+  ...
+
+}
+--------
+
+This has the obvious meaning: both topology `B` and
+topology `C` are imported into topology `A`, according
+to the rules described above.
+
+Each topology may appear at most once in the import list.
+For example, this is incorrect:
+
+[source,fpp]
+--------
+topology A {
+
+  import B
+  import B # Error: B imported twice
+
+}
+--------
+
+==== Transitive Imports
+
+In general, transitive imports are allowed.
+For example, topology `A` may import topology `B`,
+and topology `B` may import topology `C`.
+Resolution works bottom-up on the import graph:
+for example, first we resolve `C`, and then we resolve `B`,
+and then we resolve `A`.
+
+Cycles in the import graph are not allowed.
+For example, if `A` imports `B` and `B` imports `C`
+and `C` imports `A`, you will get an error.
+
+=== Include Specifiers
+
+You can include code from another file in a topology definition.
+You do this by writing an *include specifier*.
+We will explain more about this in the section on
+<<Specifying-Models-as-Files_Include-Specifiers,include specifiers>>
+below.

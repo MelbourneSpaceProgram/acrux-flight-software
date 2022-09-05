@@ -1,0 +1,248 @@
+=== Connection Graph Specifiers
+
+A *connection graph specifier* specifies one or more *connection graphs*
+as part of a
+<<Definitions_Topology-Definitions,topology definition>>.
+A connection graph is a named set of *connections*.
+A connection connects an <<Specifiers_Port-Instance-Specifiers,output port 
+instance>> of one
+<<Specifiers_Component-Instance-Specifiers,component instance>>
+to an
+<<Specifiers_Port-Instance-Specifiers,input port instance>> of
+another.
+
+==== Syntax
+
+A connection graph specifier is one of the following:
+
+* A *direct graph specifier:*
+`connections` 
+<<Lexical-Elements_Identifiers,_identifier_>>
+`{` _connection-sequence_ `}`
+
+* A *pattern graph specifier:*
+_pattern-kind_
+`connections` 
+`instance` <<Scoping-of-Names_Qualified-Identifiers,_qual-ident_>>
+_[_
+`{` _instance-sequence_ `}`
+_]_
+
+_connection-sequence_ is an
+<<Element-Sequences,element sequence>> in 
+which each element is a *connection*,
+and the terminating punctuation is a comma.
+A connection is the following:
+
+<<Port-Instance-Identifiers,_port-instance-id_>>
+_[_
+`[`
+<<Expressions,_expression_>>
+`]`
+_]_
+`pass:[->]`
+<<Port-Instance-Identifiers,_port-instance-id_>>
+_[_
+`[`
+<<Expressions,_expression_>>
+`]`
+_]_
+
+_pattern-kind_ is one of the following:
+
+. `command`
+
+. `event`
+
+. `health`
+
+. `param`
+
+. `telemetry`
+
+. `time`
+
+_instance-sequence_ is an
+<<Element-Sequences,element sequence>> in 
+which each element is a
+<<Scoping-of-Names_Qualified-Identifiers,qualified identifier>>,
+and the terminating punctuation is a comma.
+
+==== Semantics
+
+*Direct graph specifiers.*
+A direct graph specifier directly specifies a named connection graph.
+
+. The identifier following the keyword `connections` names
+the connection graph.
+
+. The connection sequence specifies the set of connections in the graph.
+For each connection _C_:
+
+.. For each of the two port instance identifiers _I_ appearing in _C_:
+
+... The component instance named in _I_
+must be available in the enclosing topology,
+either through
+<<Specifiers_Component-Instance-Specifiers,direct specification>>
+or through
+<<Specifiers_Topology-Import-Specifiers,import>>.
+
+... The optional expression _e_ following the identifier, if it is present, 
+represents a port number, i.e., an index into an
+array of port instances.
+The type of _e_ must be a
+<<Types_Internal-Types_Numeric-Types,numeric type>>, and
+_e_ must
+<<Evaluation,evaluate>> to a compile-time constant
+that becomes a non-negative integer _n_ when 
+<<Evaluation_Type-Conversion,converted to>> type _Integer_.
+_n_ must be in bounds for the array size of 
+the port instance specifier named in _I_.
+
+.. The arrow represents the direction of the connection (left to right).
+
+.. The connection must go from an
+<<Specifiers_Port-Instance-Specifiers,output port instance>>
+to an
+<<Specifiers_Port-Instance-Specifiers,input port instance>>.
+
+.. The types specified in the two port instances must match,
+except that a `serial` port at either end can be connected
+to any port at the other end.
+
+*Pattern graph specifiers.*
+A pattern graph specifier indirectly specifies one or more named connection 
+graphs
+by specifying a source component instance, a set of target component
+instances, and a pattern for connecting the source instance to each of the
+target instances.
+
+. Each topology may contain at most one of each kind of graph pattern.
+
+. The qualified identifier following the keyword `instance` must
+<<Scoping-of-Names_Resolution-of-Qualified-Identifiers,refer to>>
+a component instance that is available in the enclosing topology,
+either through
+<<Specifiers_Component-Instance-Specifiers,direct specification>>
+or through
+<<Specifiers_Topology-Import-Specifiers,import>>.
+
+. If the instance sequence _I_ appears, then each qualified identifier
+_Q_ appearing in _I_ must refer to a component instance that is available
+in the enclosing topology, and each instance must be valid for the pattern
+(i.e., must have a port of the type required for the pattern).
+The instances in the sequence name the target instances for the
+pattern. If no instance sequence appears, then the target instances are
+all instances specified directly in the enclosing topology (not via import)
+that are valid for the pattern.
+
+The meaning of specifier depends on the pattern kind, as follows:
+
+. `command`: The source instance _I_ is a command dispatcher.
+The following connection graphs are generated:
+
+.. A connection graph named `Command` consisting of all connections
+from the output port of type `Fw::Cmd` of _I_ to the command input port
+of each target component.
+
+.. A connection graph named `CommandRegistration` consisting of all
+connections from the command registration output port of 
+each target component
+to the command registration input port of _I_.
+
+.. A connection graph named `CommandResponse` consisting of all connections 
+from the command response output port of each target component
+to the command response input port of _I_.
+
+. `event`: The source instance _I_ is an event logger
+with an input port of type `Fw.Log`.
+The generated connection graph has name `Events` and contains
+all connections for sending events to _I_ through an event
+output port.
+
+. `health`: The source instance _I_ is a health component.
+The generated connection graph has name `Health` and contains
+all connections between the health component and ping
+ports of the target components of type `Svc.Ping`.
+
+. `param`: The source instance _I_ is a parameter database
+component.
+The generate connection graph has name `Parameters`
+and contains all connections for (a) getting 
+parameters from the database and (b) saving
+parameters to the database.
+
+. `telemetry`: The source instance _I_ is a telemetry database
+with an input port of type `Fw.Tlm`.
+The generated connection graph has name `Telemetry`
+and contains all connections for sending telemetry to _I_
+through a telemetry output port.
+
+. `text event`: The source instance _I_ is a text event
+logger with an input port of type `Fw.LogText`.
+The generated connection graph has name `TextEvents` and contains
+all connections for sending events to _I_ through an event
+output port.
+
+. `time`: The source instance _I_ is a time component.
+The generated connection graph has name `Time` and contains
+all connections for getting the time from _I_ through
+a time get output port.
+
+==== Example
+
+Assume the following instances are available in the enclosing topology,
+and all have command ports:
+
+[source,fpp]
+----
+commandDispatcher
+commandSequencer
+engineeringTelemetryLogger
+eventLogger
+telemetryDatabase
+timeSource
+----
+
+Here is a pattern graph specifier:
+
+[source,fpp]
+----
+command connections instance commandDispatcher
+----
+
+It is equivalent to the following direct graph specifiers:
+
+[source,fpp]
+----
+connections CommandRegistration {
+  commandDispatcher.cmdRegOut -> commandDispatcher.cmdRegIn
+  commandSequencer.cmdRegOut -> commandDispatcher.cmdRegIn
+  engineeringTelemetryLogger.cmdRegOut -> commandDispatcher.cmdRegIn
+  eventLogger.cmdRegOut -> commandDispatcher.cmdRegIn
+  telemetryDatabase.cmdRegOut -> commandDispatcher.cmdRegIn
+  timeSource.cmdRegOut -> commandDispatcher.cmdRegIn
+}
+
+connections Command {
+  commandDispatcher.cmdOut -> commandDispatcher.cmdIn
+  commandDispatcher.cmdOut -> commandSequencer.cmdIn
+  commandDispatcher.cmdOut -> engineeringTelemetryLogger.cmdIn
+  commandDispatcher.cmdOut -> eventLogger.cmdIn
+  commandDispatcher.cmdOut -> telemetryDatabase.cmdIn
+  commandDispatcher.cmdOut -> timeSource.cmdIn
+}
+
+connections CommandResponse {
+  commandDispatcher.cmdRespOut -> commandDispatcher.cmdRespIn
+  commandSequencer.cmdRespOut -> commandDispatcher.cmdRespIn
+  engineeringTelemetryLogger.cmdRespOut -> commandDispatcher.cmdRespIn
+  eventLogger.cmdRespOut -> commandDispatcher.cmdRespIn
+  telemetryDatabase.cmdRespOut -> commandDispatcher.cmdRespIn
+  timeSource.cmdRespOut -> commandDispatcher.cmdRespIn
+}
+----
+
+See also the <<Definitions_Topology-Definitions_Examples,examples for topology 
+definitions>>.

@@ -1,0 +1,15 @@
+#!/bin/sh -e
+
+export COMPILER_ROOT=$PWD/../../../..
+
+# F Prime ode generation is broken for built-in types
+skip_cpp_names="
+BuiltInTypeArray
+"
+
+for name in $skip_cpp_names
+do
+  export SKIP_CPP_FOR_$name=1
+done
+
+sh ../scripts/check-xml.sh

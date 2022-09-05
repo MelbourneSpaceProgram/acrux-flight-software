@@ -1,0 +1,295 @@
+== Scoping of Names
+
+=== Qualified Identifiers
+
+A *qualified identifier* is one of the following:
+
+1.  An
+<<Lexical-Elements_Identifiers,identifier>>.
+
+2.  _Q_ `.` _I_, where _Q_ is a qualified identifier and _I_ is an
+identifier.
+
+Examples:
+
+[source,fpp]
+----
+a
+a.b
+a.b.c
+----
+
+=== Names of Definitions
+
+Every 
+<<Definitions,definition>>
+ _D_ appearing in an FPP model has a unique *qualified
+name*. The qualified name is a
+<<Scoping-of-Names_Qualified-Identifiers,qualified identifier>> formed as follows:
+
+* If _D_ appears outside any 
+<<Definitions,definition>> with a brace-delimited body, then
+the qualified name is the identifier _I_ appearing in _D_.
+
+* Otherwise, the qualified name is _N_ `.` _I_, where _N_ is the qualified
+name of the enclosing definition, and _I_ is
+the identifier appearing in _D_.
+
+For example:
+
+[source,fpp]
+----
+module M { # Qualified name is M
+  module N { # Qualified name is M.N
+    enum Maybe { # Qualified name is M.N.Maybe
+      NO # Qualified name is M.N.Maybe.NO
+      YES # Qualified name is M.N.Maybe.YES
+    }
+  }
+}
+----
+
+=== Name Groups
+
+The qualified names of definitions and
+reside in the following *name groups*:
+
+. The *component instance name group*
+
+. The *component name group*
+
+. The *port name group*
+
+. The *topology name group*
+
+. The *type name group*
+
+. The *value name group*
+
+Definitions reside in name groups as follows:
+
+* Abstract type definitions reside in the type name group.
+
+* Array type definitions reside in the type name group.
+
+* Component definitions reside in the component name group,
+the value name group, and the type name group.
+
+* Component instance definitions reside in the component instance name group.
+
+* Constant definitions reside in the value name group.
+
+* Enum definitions reside in both the value name group and the type name group.
+
+* Enumerated constant definitions reside in the value name group.
+
+* Module definitions reside in all the name groups.
+
+* Port definitions reside in the port name group.
+
+* Struct type definitions reside in the type name group.
+
+* Topology definitions reside in the topology name group.
+
+Notice that elements with scopes reside in the name groups of items
+that they may enclose.
+For example, enums reside in the value name group because they
+enclose constant definitions.
+
+=== Multiple Definitions with the Same Qualified Name
+
+==== Different Name Groups
+
+Two definitions with the same qualified name are allowed if they are in
+different name groups. For example:
+
+[source,fpp]
+----
+struct s { x: U32 } # Defines s in the type name group
+constant s = 0 # Defines s in the value name group
+----
+
+==== Module Definitions
+
+Multiple syntactic module definitions with the same qualified name are
+allowed. The semantic analysis combines all such definitions into a
+single module definition with that qualified name. For example, this
+model is legal
+
+[source,fpp]
+----
+module M { constant a = 0 }
+module M { constant b = 1 }
+a = M.a
+b = M.b
+----
+
+It is equivalent to this model:
+
+[source,fpp]
+----
+module M {
+  constant a = 0
+  constant b = 1
+}
+a = M.a
+b = M.b
+----
+
+Because the <<Definitions-and-Uses_Order-of-Definitions-and-Uses,order
+of definitions is irrelevant>>, this is also equivalent:
+
+[source,fpp]
+----
+module M { constant a = 0 }
+a = M.a
+b = M.b
+module M { constant b = 1 }
+----
+
+==== Conflicting Definitions
+
+Within the same name group, two definitions with the same
+qualified name are not allowed, unless they are both module definitions
+as described above. For example:
+
+[source,fpp]
+----
+module M {
+  constant a = 0
+  constant a = 1 # Error: Name M.a is redefined
+}
+----
+
+Two definitions with the same identifier are allowed if they have
+different qualified names, for example:
+
+[source,fpp]
+----
+constant a = 0
+module M {
+  constant a = 1 # OK, qualified name is M.a =/= a
+}
+----
+
+=== Resolution of Identifiers
+
+The following rules govern the resolution of identifiers, i.e.,
+associating identifiers with definitions:
+
+. Use the context to determine which
+<<Scoping-of-Names_Name-Groups,name group>>
+_S_ to use. For example, if we are expecting a type name, then use the
+type name group.
+
+. At the top level (outside the brace-delimited body of any definition), the
+identifier _I_ refers to the unique definition with qualified name _I_ if it
+exists in name group _S_. Otherwise an error results.
+
+. Inside the brace-delimited body of a <<Definitions,definition>> with
+qualified name _N_ appearing at the top level:
+
+  .. The identifier _I_ refers to the definition with qualified name
+_N_ `.` _I_ if it exists in name group _S_.
+
+  .. Otherwise _I_ refers to the definition with qualified name _I_ if it
+exists in name group _S_.
+
+  .. Otherwise an error results.
+
+. Inside the brace-delimited body of a definition with qualified name
+_N_ appearing inside the body of a  definition _D_:
+
+  ..  The identifier _I_ refers to the definition with qualified name
+_N_ `.` _I_ if it exists in name group _S_.
+
+  ..  Otherwise proceed as if _I_ were appearing inside _D_.
+
+*Example:*
+
+_S_ refers to the value name group.
+
+[source,fpp]
+----
+# Identifier M is in scope in S and refers to the qualified name M
+# Identifier a is in scope in S and refers to qualified name a
+
+constant a = 1 # Unique definition in S with qualified name a
+
+module M {
+  # Identifier M is in scope in S and refers to the qualified name M
+  # Identifier N is in scope in S and refers to the qualified name N
+  # Identifier a is in scope in S and refers to qualified name a
+  # Identifier b is in scope in S and refers to qualified name M.b
+  constant b = 2 # Unique definition in S with qualified name M.b
+}
+
+# Identifier M is in scope in S and refers to the qualified name M
+# Identifier a is in scope in S and refers to qualified name a
+
+module M {
+
+  # Identifier M is in scope in S and refers to the qualified name M
+  # Identifier N is in scope in S and refers to the qualified name M.N
+  # Identifier a is in scope and refers to qualified name a
+  # Identifier b is in scope and refers to qualified name M.b
+
+  module N {
+    # Identifier M is in scope in S and refers to the qualified name M
+    # Identifier N is in scope in S and refers to the qualified name M.N
+    # Identifier a is in scope in S and refers to qualified name a
+    # Identifier b is in scope in S and refers to qualified name M.N.b
+    constant b = 3 # Unique definition in S with qualified name M.N.b
+  }
+
+}
+
+# Identifier M is in scope in S and refers to the qualified name M
+# Identifier a is in scope in S and refers to qualified name a
+----
+
+=== Resolution of Qualified Identifiers
+
+The following rules govern the resolution of
+<<Scoping-of-Names_Qualified-Identifiers,qualified identifiers>>, i.e., 
+associating qualified identifiers with definitions:
+
+. If a qualified identifier is an identifier, then resolve it as
+stated in the
+<<Scoping-of-Names_Resolution-of-Identifiers,previous section>>.
+
+. Otherwise, the qualified identifier has the form _Q_ `.` _I_, where
+_Q_ is a qualified identifier and _I_ is an identifier. Do the
+following:
+
+.. Recursively resolve _Q_.
+
+.. If _Q_ refers to a <<Definitions,definition>> 
+with a brace-delimited body, then do the following:
+
+... Determine the <<Scoping-of-Names_Name-Groups,name group>> _S_ of _Q_ `.` 
+_I_.
+
+... Look in _D_ for a definition with identifier _I_ in name group _S_.
+    If there is none, issue an error.
+
+.. Otherwise the qualified identifier is invalid. Issue an error.
+
+*Example:*
+
+[source,fpp]
+----
+module M {
+  constant a = 0
+  enum E {
+    b = 2
+    c = b # Refers to M.E.b
+    d = E.b # Refers to M.E.b
+    e = M.E.b # Refers to M.E.b
+  }
+  constant f = a # Refers to M.a
+  constant g = M.a # Refers to M.a
+  constant h = E.b # Refers to M.E.b
+  constant i = M.E.b # Refers to M.E.b
+}
+----

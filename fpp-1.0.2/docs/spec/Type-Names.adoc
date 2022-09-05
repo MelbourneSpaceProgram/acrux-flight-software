@@ -1,0 +1,112 @@
+== Type Names
+
+*Type names* are the syntactic names of
+<<Types,types>>.
+In some cases, e.g., `U32`, there is a one-to-one correspondence
+between type names and types.
+In other cases, e.g., array types, there is no one-to-one correspondence.
+For example, depending on the enclosing scope, the name
+`a.b` and the name `b` may refer to the same array type.
+
+=== Primitive Integer Type Names
+
+*Primitive integer type names* are the names of the 
+<<Types_Primitive-Integer-Types,primitive integer types>>.
+There are two kinds of primitive
+integer types: unsigned integer types and signed integer types.
+
+* The names of the unsigned integer types are `U8`, `U16`, `U32`, and `U64`. 
+The `U` stands for "`unsigned.`" The number after the U is the width of the
+representation in bits, using the standard binary representation of an
+unsigned integer.
+
+* The names of the signed integer types are `I8`, `I16`, `I32`, and `I64`. The 
+`I` stands for "`[signed] integer.`" The number after the I is the width of
+the representation in bits, using the standard binary two's complement
+representation of a signed integer.
+
+=== Floating-Point Type Names
+
+The *floating-point type names* are `F32` and `F64`. These refer to the types 
+of IEEE
+floating-point values of width 32 and 64 bits, respectively.
+
+=== The Boolean Type Name
+
+The type name `bool` represents the type of the two Boolean values `true` and 
+`false`.
+
+=== String Type Names
+
+A *string type name* consists of the keyword `string` optionally
+followed by the keyword `size` and an
+<<Expressions,_expression_>>. For example:
+[source,fpp]
+----
+string
+string size 256
+----
+
+The optional expression following the keyword `size` is called the *size
+expression* of the string type name.  If present, it must have a 
+<<Types_Internal-Types_Numeric-Types,numeric type>>, and it must
+evaluate to a value greater than zero after conversion to 
+<<Types_Internal-Types_Integer,_Integer_>>.
+The size expression specifies the maximum
+length of a string value represented by the type.  If the size expression is
+not present, then the translator uses a default maximum string length.
+
+=== Qualified Identifier Type Names
+
+A *qualified identifier type name* is a
+<<Scoping-of-Names_Qualified-Identifiers,qualified
+identifier>> that refers to an
+<<Definitions_Abstract-Type-Definitions,abstract type definition>>,
+<<Definitions_Array-Definitions,array definition>>,
+<<Definitions_Enum-Definitions,enum definition>>, or
+<<Definitions_Struct-Definitions,struct definition>>
+ via the
+<<Scoping-of-Names_Resolution-of-Qualified-Identifiers,rules
+for name scoping>>.
+It names the
+<<Types,type>> defined in the definition to which it refers.
+
+For example:
+
+
+[source,fpp]
+----
+module M {
+  type T
+  array A = [3] T # T is a qualified identifier t type name. It names the type M.T.
+}
+----
+
+[source,fpp]
+----
+module M {
+  array A = [3] U8
+  array B = [3] A # A is an array type name. It names the type M.A.
+}
+----
+
+[source,fpp]
+----
+module M {
+  enum E { X = 0, Y = 1 }
+  array A = [3] E # E is a qualified identifier type name. It names the type M.E.
+}
+----
+
+[source,fpp]
+----
+module M {
+  struct S {
+    x: U32
+    y: F32
+  }
+  struct T {
+    s: S # S is a qualified identifier type name. It names the type M.S.
+  }
+}
+----
