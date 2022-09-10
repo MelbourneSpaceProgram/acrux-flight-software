@@ -1,5 +1,5 @@
 ARG VARIANT="22.04"
-FROM ubuntu:${VARIANT} as base
+FROM --platform=linux/amd64 ubuntu:${VARIANT} as base
 
 ARG DEBIAN_FRONTEND=noninteractive
 
