@@ -45,6 +45,7 @@ add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/SendBuffApp/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/SignalGen/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/MathTypes/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/MathPorts/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/MathSender/")
 
 # Add Topology subdirectory
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")
