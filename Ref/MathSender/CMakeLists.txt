@@ -4,3 +4,9 @@ set(SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/MathSender.fpp"
 )
 register_fprime_module()
+
+# Register the unit test build
+#set(UT_SOURCE_FILES
+#  "${CMAKE_CURRENT_LIST_DIR}/MathSender.fpp"
+#)
+#register_fprime_ut()
