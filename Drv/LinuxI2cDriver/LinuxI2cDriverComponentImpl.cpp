@@ -10,11 +10,10 @@
 //
 // ======================================================================
 
-
 #include <Drv/LinuxI2cDriver/LinuxI2cDriverComponentImpl.hpp>
 #include <Fw/Logger/Logger.hpp>
 #include "Fw/Types/BasicTypes.hpp"
-#include "Fw/Types/Assert.hpp"
+#include "Fw/Types/Assert.hpp" 
 
 #include <unistd.h> // required for I2C device access
 #include <fcntl.h>  // required for I2C device configuration
@@ -25,6 +24,7 @@
 
 #define DEBUG_PRINT 0
 
+//provide scope to the declarations inside.
 namespace Drv {
 
   // ----------------------------------------------------------------------
