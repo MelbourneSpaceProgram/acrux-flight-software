@@ -11,7 +11,7 @@ set(CMAKE_C_COMPILER "/usr/bin/arm-none-eabi-gcc")
 set(CMAKE_CXX_COMPILER "/usr/bin/arm-none-eabi-g++")
 
 SET(STM32_BSP_PATH "${CMAKE_CURRENT_LIST_DIR}/../../stm32-bsp" CACHE PATH "Path to STM32 BSP")
-set(MCU_LINKER_SCRIPT ${STM32_BSP_PATH}/STM32H743ZITx_FLASH.ld)
+set(MCU_LINKER_SCRIPT ${STM32_BSP_PATH}/STM32H743ZITX_FLASH.ld)
 
 #Setting linker options https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html#Link-Options:~:text=%2Dllibrary,%2Dl%20library
 #-T Use script as the linker script.
