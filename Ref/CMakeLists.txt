@@ -38,6 +38,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/../cmake/FPrime-Code.cmake")
 # This section includes deployment specific directories. This allows use of non-
 # core components in the topology, which is also added here.
 ##
+# Add FreeRTOS source code directory
+add_fprime_subdirectory("${FPRIME_FRAMEWORK_PATH}/Os/stm32-bsp/")
 # Add component subdirectories
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/PingReceiver/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/RecvBuffApp/")

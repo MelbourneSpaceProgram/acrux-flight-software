@@ -1,5 +1,6 @@
 set(CMAKE_SYSTEM_NAME "FreeRTOS-stm")
 set(CMAKE_SYSTEM_PROCESSOR arm)
+# set(CMAKE_CROSSCOMPILING 1)
 
 # enable the _WORKS flags to force local search on compiler
 # set(CMAKE_C_COMPILER_WORKS 1)
@@ -10,7 +11,7 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 set(CMAKE_C_COMPILER "/usr/bin/arm-none-eabi-gcc")
 set(CMAKE_CXX_COMPILER "/usr/bin/arm-none-eabi-g++")
 
-SET(STM32_BSP_PATH "${CMAKE_CURRENT_LIST_DIR}/../../stm32-bsp" CACHE PATH "Path to STM32 BSP")
+SET(STM32_BSP_PATH "${CMAKE_CURRENT_LIST_DIR}/../../Os/stm32-bsp" CACHE PATH "Path to STM32 BSP")
 set(MCU_LINKER_SCRIPT ${STM32_BSP_PATH}/STM32H743ZITX_FLASH.ld)
 
 #Setting linker options https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html#Link-Options:~:text=%2Dllibrary,%2Dl%20library

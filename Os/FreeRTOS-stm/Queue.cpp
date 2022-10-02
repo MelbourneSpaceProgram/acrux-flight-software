@@ -1,7 +1,7 @@
 #include <Fw/Types/Assert.hpp>
 #include <Os/Queue.hpp>
-#include <stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h>
-
+#include <Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h>
+#include <Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/include/queue.h>
 namespace Os
 {
 
@@ -11,7 +11,7 @@ Queue::Queue() :
 
 Queue::~Queue() 
 {
-    vQueueDelete(this->m_handle);
+    vQueueDelete((QueueHandle_t)this->m_handle);
 }
 
 Queue::QueueStatus 
@@ -29,7 +29,7 @@ Queue::createInternal(const Fw::StringBase &name, NATIVE_INT_TYPE depth, NATIVE_
     {
         return QUEUE_UNINITIALIZED;
     }
-    this->m_handle = xQueue;
+    this->m_handle = (POINTER_CAST)xQueue;
     
     Queue::s_numQueues++;
 
@@ -40,7 +40,7 @@ Queue::QueueStatus
 Queue::send(const U8* buffer, NATIVE_INT_TYPE size, NATIVE_INT_TYPE priority, QueueBlocking block) 
 {
 
-    QueueHandle_t queueHandle = this->m_handle;
+    QueueHandle_t queueHandle = (QueueHandle_t) this->m_handle;
 
     if (NULL == queueHandle) 
     {
@@ -75,7 +75,7 @@ Queue::QueueStatus
 Queue::receive(U8* buffer, NATIVE_INT_TYPE capacity, NATIVE_INT_TYPE &actualSize, NATIVE_INT_TYPE &priority, QueueBlocking block) 
 {
 
-    QueueHandle_t queueHandle = this->m_handle;
+    QueueHandle_t queueHandle = (QueueHandle_t) this->m_handle;
 
     if (NULL == queueHandle) 
     {
@@ -104,7 +104,7 @@ Queue::receive(U8* buffer, NATIVE_INT_TYPE capacity, NATIVE_INT_TYPE &actualSize
 NATIVE_INT_TYPE 
 Queue::getNumMsgs(void) const 
 {
-    QueueHandle_t queueHandle = this->m_handle;
+    QueueHandle_t queueHandle = (QueueHandle_t) this->m_handle;
     if (NULL == queueHandle) 
     {
         return QUEUE_UNINITIALIZED;
@@ -129,7 +129,7 @@ Queue::getMaxMsgs(void) const
 NATIVE_INT_TYPE 
 Queue::getQueueSize(void) const 
 {
-    QueueHandle_t queueHandle = this->m_handle;
+    QueueHandle_t queueHandle = (QueueHandle_t) this->m_handle;
     if (NULL == queueHandle) 
     {
         return QUEUE_UNINITIALIZED;
@@ -140,7 +140,7 @@ Queue::getQueueSize(void) const
 
 NATIVE_INT_TYPE Queue::getMsgSize(void) const 
 {
-    QueueHandle_t queueHandle = this->m_handle;
+    QueueHandle_t queueHandle = (QueueHandle_t) this->m_handle;
     if (NULL == queueHandle) 
     {
         return QUEUE_UNINITIALIZED;

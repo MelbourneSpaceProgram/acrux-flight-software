@@ -53,6 +53,35 @@ if (FPRIME_USE_POSIX)
         "${CMAKE_CURRENT_LIST_DIR}/Linux/Directory.cpp"
     )
 endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS-stm")
+  message(STATUS "Detecting freeRTOS")
+  include_directories("${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/include"
+					"${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
+					"${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Drivers/CMSIS/Device/ST/STM32H7xx/Include"
+					"${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Drivers/STM32H7xx_HAL_Driver/Inc"
+					"${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Drivers/CMSIS/Include/"
+					"${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
+					"${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Core/Inc"					
+					)
+  list(APPEND SOURCE_FILES
+        "${CMAKE_CURRENT_LIST_DIR}/LogPrintf.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/InterruptLock.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/IntervalTimer.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/Mutex.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/TaskId.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/Queue.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/Task.cpp"
+        # Non-VxWorks basic support
+        "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/File.cpp"
+        "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/FileSystem.cpp"
+      )
+  set(MOD_DEPS
+      Os/stm32-bsp
+    )    
+  # Communication Implementations
+endif()
+
 # Darwin IPC queue implementation
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND SOURCE_FILES
