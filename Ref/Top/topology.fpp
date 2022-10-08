@@ -31,7 +31,7 @@ module Ref {
     instance chanTlm
     instance cmdDisp
     instance cmdSeq
-    instance comm
+    #instance comm
     instance downlink
     instance eventLogger
     instance fatalAdapter
@@ -83,10 +83,10 @@ module Ref {
       fileDownlink.bufferSendOut -> downlink.bufferIn
 
       downlink.framedAllocate -> staticMemory.bufferAllocate[Ports_StaticMemory.downlink]
-      downlink.framedOut -> comm.send
+      #downlink.framedOut -> comm.send
       downlink.bufferDeallocate -> fileDownlink.bufferReturn
 
-      comm.deallocate -> staticMemory.bufferDeallocate[Ports_StaticMemory.downlink]
+      #comm.deallocate -> staticMemory.bufferDeallocate[Ports_StaticMemory.downlink]
 
     }
 
@@ -135,8 +135,8 @@ module Ref {
 
     connections Uplink {
 
-      comm.allocate -> staticMemory.bufferAllocate[Ports_StaticMemory.uplink]
-      comm.$recv -> uplink.framedIn
+      #comm.allocate -> staticMemory.bufferAllocate[Ports_StaticMemory.uplink]
+      #comm.$recv -> uplink.framedIn
       uplink.framedDeallocate -> staticMemory.bufferDeallocate[Ports_StaticMemory.uplink]
 
       uplink.comOut -> cmdDisp.seqCmdBuff

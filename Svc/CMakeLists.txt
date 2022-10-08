@@ -47,7 +47,22 @@ if (FPRIME_ENABLE_TEXT_LOGGERS)
 	add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ActiveTextLogger/")
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin" OR ${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS-stm")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 	add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LinuxTime/")
 	# add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LinuxTimer/")
 endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS-stm")
+	include_directories("${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/include"
+	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
+	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Drivers/CMSIS/Device/ST/STM32H7xx/Include"
+	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Drivers/STM32H7xx_HAL_Driver/Inc"
+	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Drivers/CMSIS/Include/"
+	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
+	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Core/Inc"					
+	)
+
+	add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LinuxTime/")
+	# add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LinuxTimer/")
+endif()
+

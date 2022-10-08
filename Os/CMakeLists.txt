@@ -73,6 +73,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS-stm")
         "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/Queue.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-stm/Task.cpp"
         # Non-VxWorks basic support
+        "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/SystemResources.cpp"
         "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/File.cpp"
         "${FPRIME_FRAMEWORK_PATH}/Os/Baremetal/FileSystem.cpp"
       )

@@ -48,5 +48,11 @@ namespace Os {
 		Status getFileCount (const char* directory, U32& fileCount) {
 			return OTHER_ERROR;
 		} //end getFileCount
+		Status getFreeSpace(const char* path, U64& totalBytes, U64& freeBytes) {
+			return OTHER_ERROR;
+		}
+		Status appendFile(const char* originPath, const char* destPath, bool createMissingDest){
+			return OTHER_ERROR;
+		}
 	} // end FileSystem namespace
 } // end Os namespace
