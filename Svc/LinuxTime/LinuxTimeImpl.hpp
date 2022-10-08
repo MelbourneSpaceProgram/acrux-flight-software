@@ -10,20 +10,24 @@
 
 #include <Svc/Time/TimeComponentAc.hpp>
 
-namespace Svc {
+namespace Svc
+{
 
-class LinuxTimeImpl: public TimeComponentBase {
+    class LinuxTimeImpl : public TimeComponentBase
+    {
     public:
-        LinuxTimeImpl(const char* compName);
+        LinuxTimeImpl(const char *compName);
         virtual ~LinuxTimeImpl();
         void init(NATIVE_INT_TYPE instance);
+
     protected:
         void timeGetPort_handler(
-                NATIVE_INT_TYPE portNum, /*!< The port number*/
-                Fw::Time &time /*!< The U32 cmd argument*/
-            );
+            NATIVE_INT_TYPE portNum, /*!< The port number*/
+            Fw::Time &time           /*!< The U32 cmd argument*/
+        );
+
     private:
-};
+    };
 
 }
 

@@ -12,6 +12,9 @@ void
 IntervalTimer::getRawTime(RawTime& time)
 {
     TickType_t t = xTaskGetTickCount();
+    // TOOD(Daniel/Bill): Consider overflow
+
+    // This lower rawTime value is representative of miliseconds in freeRTOS
     time.lower = t;
 
     //https://www.freertos.org/FreeRTOS-Coding-Standard-and-Style-Guide.html#:~:text=port.%20These%20are%3A-,TickType_t,-If%20configUSE_16_BIT_TICKS%20is
