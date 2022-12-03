@@ -53,6 +53,7 @@ module Ref {
     instance textLogger
     instance uplink
     instance systemResources
+    instance ledBlinker
 
     # ----------------------------------------------------------------------
     # Pattern graph specifiers
@@ -106,6 +107,7 @@ module Ref {
       rateGroup1Comp.RateGroupMemberOut[2] -> chanTlm.Run
       rateGroup1Comp.RateGroupMemberOut[3] -> fileDownlink.Run
       rateGroup1Comp.RateGroupMemberOut[4] -> systemResources.run
+      rateGroup1Comp.RateGroupMemberOut[5] -> ledBlinker.schedIn
 
       # Rate group 2
       rateGroupDriverComp.CycleOut[Ports_RateGroups.rateGroup2] -> rateGroup2Comp.CycleIn

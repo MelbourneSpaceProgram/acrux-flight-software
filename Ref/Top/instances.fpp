@@ -309,4 +309,6 @@ module Ref {
 
   instance systemResources: Svc.SystemResources base id 0x4B00
 
+  instance ledBlinker: Ref.LedBlinker base id 0x4C00
+
 }
