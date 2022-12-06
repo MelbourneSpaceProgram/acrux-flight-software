@@ -9,7 +9,7 @@ set(SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/LedBlinker.fpp"
   "${CMAKE_CURRENT_LIST_DIR}/LedBlinker.cpp"
 )
-include_directories("${CMAKE_CURRENT_LIST_DIR}/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/include"
+include_directories("${FPRIME_FRAMEWORK_PATH}/Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/include"
 "${FPRIME_FRAMEWORK_PATH}/Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
 "${FPRIME_FRAMEWORK_PATH}/Os/stm32-bsp/Drivers/CMSIS/Device/ST/STM32H7xx/Include"
 "${FPRIME_FRAMEWORK_PATH}/Os/stm32-bsp/Drivers/STM32H7xx_HAL_Driver/Inc"
