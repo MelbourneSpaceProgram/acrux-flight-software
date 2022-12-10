@@ -50,7 +50,8 @@ add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/SignalGen/")
 # Add Topology subdirectory
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")
 
-set(SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/Top/Main.cpp")
+set(SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/Top/Main.cpp"
+"${FPRIME_FRAMEWORK_PATH}/Os/stm32-bsp/Core/Startup/startup_stm32h743zitx.s")
 set(MOD_DEPS ${PROJECT_NAME}/Top)
 
 register_fprime_deployment()

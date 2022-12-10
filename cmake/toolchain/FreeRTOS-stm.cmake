@@ -5,10 +5,12 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 # enable the _WORKS flags to force local search on compiler
 # set(CMAKE_C_COMPILER_WORKS 1)
 # set(CMAKE_CXX_COMPILER_WORKS 1)
+set(CMAKE_ASM_COMPILER_WORKS 1)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 # Heaps of work here setting compiler flags for arm toolchain !!!!!!!!!!!!!!!
 set(CMAKE_C_COMPILER "/usr/bin/arm-none-eabi-gcc")
+set(CMAKE_ASM_COMPILER "/usr/bin/arm-none-eabi-gcc")
 set(CMAKE_CXX_COMPILER "/usr/bin/arm-none-eabi-g++")
 
 SET(STM32_BSP_PATH "${CMAKE_CURRENT_LIST_DIR}/../../Os/stm32-bsp" CACHE PATH "Path to STM32 BSP")
