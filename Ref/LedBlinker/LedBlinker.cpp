@@ -8,6 +8,8 @@
 #include <Ref/LedBlinker/LedBlinker.hpp>
 #include "Fw/Types/BasicTypes.hpp"
 #include "Os/stm32-bsp/Core/Inc/main.h"
+#include "Os/stm32-bsp/Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h743xx.h"
+#include "Os/stm32-bsp/Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h"
 
 namespace Ref {
 
@@ -47,7 +49,7 @@ namespace Ref {
         NATIVE_UINT_TYPE context
     )
   {
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
   }
 
 } // end namespace Ref
