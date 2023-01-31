@@ -53,13 +53,14 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS-stm")
-	include_directories("${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/include"
-	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
-	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Drivers/CMSIS/Device/ST/STM32H7xx/Include"
-	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Drivers/STM32H7xx_HAL_Driver/Inc"
-	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Drivers/CMSIS/Include/"
-	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
-	"${CMAKE_CURRENT_LIST_DIR}/../Os/stm32-bsp/Core/Inc"					
+	include_directories("${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Middlewares/Third_Party/FreeRTOS/Source/include"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Drivers/CMSIS/Device/ST/STM32H7xx/Include"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Drivers/STM32H7xx_HAL_Driver/Inc"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Drivers/CMSIS/Include/"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Core/Inc"
+	"${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/"
 	)
 
 	add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LinuxTime/")

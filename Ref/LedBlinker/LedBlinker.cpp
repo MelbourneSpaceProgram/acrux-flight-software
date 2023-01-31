@@ -7,9 +7,9 @@
 
 #include <Ref/LedBlinker/LedBlinker.hpp>
 #include "Fw/Types/BasicTypes.hpp"
-#include "Os/stm32-bsp/Core/Inc/main.h"
-#include "Os/stm32-bsp/Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h743xx.h"
-#include "Os/stm32-bsp/Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h"
+#include "Ref/NucleoH7_freeRTOS/Core/Inc/main.h"
+#include "Ref/NucleoH7_freeRTOS/Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h743xx.h"
+#include "Ref/NucleoH7_freeRTOS/Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h"
 
 namespace Ref {
 

@@ -1,4 +1,4 @@
-#include <Os/stm32-bsp/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h>
+#include <Ref/NucleoH7_freeRTOS/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h>
 #include <StandardTypes.hpp>
 #include <Os/TaskId.hpp>
 

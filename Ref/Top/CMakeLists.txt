@@ -9,13 +9,19 @@ set(SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/instances.fpp"
   "${CMAKE_CURRENT_LIST_DIR}/topology.fpp"
   "${CMAKE_CURRENT_LIST_DIR}/RefTopologyDefs.cpp"
+  # "${CMAKE_CURRENT_LIST_DIR}/Main.cpp"
+  # "${FPRIME_FRAMEWORK_PATH}/Ref/NucleoH7_freeRTOS/startup_stm32h743xx.s"
 )
+
+
 set(MOD_DEPS
   Fw/Logger
   Svc/LinuxTime
+  Ref/NucleoH7_freeRTOS
   # Communication Implementations
   # Drv/Udp
   # Drv/TcpClient
 )
 
 register_fprime_module()
+# register_fprime_executable()
