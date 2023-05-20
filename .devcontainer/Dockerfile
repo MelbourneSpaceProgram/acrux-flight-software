@@ -28,3 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && python3 -m pip install -U --upgrade pip setuptools setuptools_scm wheel \
     && printf '\n[ -d "%s" ] && . %s/bin/activate\n' /tmp/fprime-venv /tmp/fprime-venv >> ~/.bashrc \
     && echo 'eval "$(register-python-argcomplete fprime-cli)"' >> ~/.bashrc
+
+# recommended arm cross compiler version over the apt repository, remove the relative apt install if using this
+# see https://github.com/nasa/fprime/discussions/1922
+#RUN curl https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
+#RUN tar xvjf arm-linux-gcc-3.3.2.tar.bz2 -C /usr/local/bin
