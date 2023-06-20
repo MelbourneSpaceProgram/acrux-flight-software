@@ -8,6 +8,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     curl \
+    wget \
     gnupg \
     git \
     build-essential \
@@ -18,9 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-setuptools \
     python3-pip \
     python3-venv \
-    gcc-arm-none-eabi \
-    gcc-arm-linux-gnueabihf \
-    g++-arm-linux-gnueabihf \
+    # gcc-arm-none-eabi \
+    # gcc-arm-linux-gnueabihf \
+    # g++-arm-linux-gnueabihf \
     && git config --global --add safe.directory /workspaces/fprime \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv /tmp/fprime-venv \
@@ -31,5 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # recommended arm cross compiler version over the apt repository, remove the relative apt install if using this
 # see https://github.com/nasa/fprime/discussions/1922
-#RUN curl https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
-#RUN tar xvjf arm-linux-gcc-3.3.2.tar.bz2 -C /usr/local/bin
+RUN wget --no-check-certificate "https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz"
+RUN tar xvJf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz -C /usr/local/bin
+ENV RPI_TOOLCHAIN_DIR=/usr/local/bin/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/
