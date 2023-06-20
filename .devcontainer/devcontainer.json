@@ -2,10 +2,10 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/ubuntu
 {
     "name": "fprime-docker",
-    // "image": "billyjt/msp-fprime-docker:latest",
-    "build": {
-      "dockerfile": "Dockerfile",
-    },
+    "image": "billyjt/msp-fprime-docker:latest",
+    // "build": {
+    //   "dockerfile": "Dockerfile",
+    // },
   
     // Provides runtime arguments to the container
     "runArgs": [
